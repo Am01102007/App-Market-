@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/*
+  Estilos globales AppMarket
+  Objetivo: Definir paleta, tipografía y comportamientos base sin interferir
+  con componentes. Mantener layouts responsables y evitar solapamientos.
+*/
+
+:root {
+  --color-neon: #E6FF00;
+  --color-navy: #161A23;
+  --color-slate: #E9F1FF;
+  --color-charcoal: #535862;
+}
+
+html, body, #root { height: 100%; }
+
+body {
+  font-family: Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  background: linear-gradient(135deg, #0f131a 0%, #161A23 60%, #1d2230 100%);
+  color: #fff;
+}
+
+/* Utilidades adicionales */
+.container-auth {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+}
+
+@media (max-width: 1024px) {
+  .container-auth { grid-template-columns: 1fr; }
+}
+
+a {
+  color: var(--color-neon);
+  text-decoration: none;
+}
+a:hover {
+  color: #D9FF00;
+}
+
+body {
+  margin: 0;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+/* Botones controlados por Tailwind: eliminamos estilos por defecto de la plantilla */
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
