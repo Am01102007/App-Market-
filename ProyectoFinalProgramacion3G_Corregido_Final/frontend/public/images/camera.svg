@@ -1,0 +1,13 @@
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#f3f4f6"/>
+  <rect x="80" y="100" width="240" height="140" rx="15" fill="#374151" stroke="#1f2937" stroke-width="2"/>
+  <rect x="90" y="110" width="220" height="120" rx="10" fill="#111827"/>
+  <circle cx="200" cy="170" r="35" fill="#6b7280" stroke="#4b5563" stroke-width="3"/>
+  <circle cx="200" cy="170" r="25" fill="#1f2937"/>
+  <circle cx="200" cy="170" r="15" fill="#374151"/>
+  <rect x="110" y="125" width="30" height="15" rx="3" fill="#6b7280"/>
+  <rect x="260" y="125" width="20" height="10" rx="2" fill="#ef4444"/>
+  <rect x="170" y="190" width="60" height="25" rx="5" fill="#e5e7eb"/>
+  <text x="200" y="208" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">Cámara</text>
+  <rect x="290" y="140" width="15" height="8" rx="2" fill="#6b7280"/>
+</svg>
