@@ -46,6 +46,12 @@ target/
 .mvn/
 mvnw
 mvnw.cmd
+apache-maven-*/
+
+# Herramientas de desarrollo locales
+apache-maven-*/
+gradle-*/
+node-*/
 
 # Archivos de Spring Boot
 *.pid
