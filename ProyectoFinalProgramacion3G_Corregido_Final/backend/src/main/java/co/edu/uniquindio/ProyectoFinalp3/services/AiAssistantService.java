@@ -33,7 +33,7 @@ public class AiAssistantService {
 
     public String chat(String userMessage) throws Exception {
         // Construir contexto con catálogo activo/available
-        List<Product> catalog = productService.getActiveProducts();
+        List<Product> catalog = productService.getActiveProducts(ProductStatus.ACTIVE);
         String catalogSummary = catalog.stream()
                 .limit(12)
                 .map(p -> String.format("- %s (%.2f) [%s]", p.getName(), p.getPrice(), p.getCategory() != null ? p.getCategory().getName() : "sin categoría"))
@@ -74,4 +74,3 @@ public class AiAssistantService {
         return content.isMissingNode() ? "No se pudo obtener respuesta del asistente." : content.asText();
     }
 }
-
