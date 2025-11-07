@@ -11,7 +11,7 @@ services:
       - key: SPRING_PROFILES_ACTIVE
         value: postgres
       - key: SPRING_DATASOURCE_URL
-        value: jdbc:postgresql://ep-broad-cake-a4jr924o-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require
+        value: jdbc:postgresql://ep-gentle-water-a4l6u9vu-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require
       - key: SPRING_DATASOURCE_USERNAME
         value: neondb_owner
       - key: SPRING_DATASOURCE_PASSWORD
