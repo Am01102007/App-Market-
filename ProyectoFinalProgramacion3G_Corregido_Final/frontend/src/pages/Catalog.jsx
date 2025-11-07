@@ -21,6 +21,7 @@ export default function Catalog() {
   const [searchParams, setSearchParams] = useSearchParams()
   // Estados para productos, carga y manejo de errores
   const [products, setProducts] = useState([])
+  const [allProducts, setAllProducts] = useState([]) // Lista base para contadores
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -30,6 +31,7 @@ export default function Catalog() {
   const category = searchParams.get('category') || 'all'
   const priceMinParam = searchParams.get('price_min') || ''
   const priceMaxParam = searchParams.get('price_max') || ''
+  const status = searchParams.get('status') || 'all'
 
   // Efecto para cargar y filtrar productos basado en parámetros de búsqueda
   useEffect(() => {
@@ -43,6 +45,7 @@ export default function Catalog() {
       .then((data) => {
         if (mounted) {
           let list = Array.isArray(data) ? data : []
+          setAllProducts(list)
           
           // Si no hay término de búsqueda, aplicar filtros locales
           if (!query) {
@@ -55,6 +58,11 @@ export default function Catalog() {
             if (category !== 'all') {
               list = list.filter(p => (p.category?.name || '').toLowerCase() === category.toLowerCase())
             }
+          }
+
+          // Filtro por estado
+          if (status !== 'all') {
+            list = list.filter(p => (p.status || '').toUpperCase() === status.toUpperCase())
           }
           
           // Filtros por rango de precios
@@ -128,6 +136,19 @@ export default function Catalog() {
   }
 
   /**
+   * Establece el filtro de estado.
+   * Actualiza los parámetros de URL con el nuevo estado seleccionado.
+   * 
+   * @param {string} value - Estado seleccionado ('all' para todos)
+   */
+  const setStatusParam = (value) => {
+    const next = new URLSearchParams(searchParams)
+    if (value === 'all') next.delete('status')
+    else next.set('status', value)
+    setSearchParams(next)
+  }
+
+  /**
    * Aplica filtros de rango de precios.
    * Procesa el formulario de filtros de precio y actualiza los parámetros de URL.
    * 
@@ -167,19 +188,52 @@ export default function Catalog() {
         <div className="bg-white border border-neutral-200 rounded-lg p-4 mb-6">
           {/* Filtros de categoría */}
           <div className="flex flex-wrap items-center gap-2 mb-4">
-            {['all','tecnologia','hogar','moda'].map((cat) => (
-              <button 
-                key={cat} 
-                onClick={() => setCategoryParam(cat)} 
-                className={`px-3 py-1 rounded-full border ${
-                  category===cat
-                    ? 'bg-primary text-white border-primary'
-                    : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-100'
-                }`}
-              >
-                {cat === 'all' ? 'Todos' : cat[0].toUpperCase()+cat.slice(1)}
-              </button>
-            ))}
+            {(() => {
+              const total = allProducts.length
+              const catCounts = {
+                tecnologia: allProducts.filter(p => (p.category?.name || p.category || '').toLowerCase() === 'tecnologia').length,
+                hogar: allProducts.filter(p => (p.category?.name || p.category || '').toLowerCase() === 'hogar').length,
+                moda: allProducts.filter(p => (p.category?.name || p.category || '').toLowerCase() === 'moda').length,
+              }
+              return ['all','tecnologia','hogar','moda'].map((cat) => (
+                <button 
+                  key={cat} 
+                  onClick={() => setCategoryParam(cat)} 
+                  className={`px-3 py-1 rounded-full border ${
+                    category===cat
+                      ? 'bg-primary text-white border-primary'
+                      : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-100'
+                  }`}
+                >
+                  {cat === 'all' ? `Todos (${total})` : `${cat[0].toUpperCase()+cat.slice(1)} (${catCounts[cat]||0})`}
+                </button>
+              ))
+            })()}
+          </div>
+
+          {/* Filtros por estado */}
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            {(() => {
+              const total = allProducts.length
+              const statusCounts = {
+                ACTIVE: allProducts.filter(p => (p.status||'').toUpperCase() === 'ACTIVE').length,
+                INACTIVE: allProducts.filter(p => (p.status||'').toUpperCase() === 'INACTIVE').length,
+                SOLD: allProducts.filter(p => (p.status||'').toUpperCase() === 'SOLD').length,
+              }
+              return ['all','ACTIVE','INACTIVE','SOLD'].map((st) => (
+                <button 
+                  key={st}
+                  onClick={() => setStatusParam(st)}
+                  className={`px-3 py-1 rounded-full border ${
+                    status===st
+                      ? 'bg-secondary text-white border-secondary'
+                      : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-100'
+                  }`}
+                >
+                  {st === 'all' ? `Todos (${total})` : `${st === 'ACTIVE' ? 'Activos' : st === 'INACTIVE' ? 'Inactivos' : 'Vendidos'} (${statusCounts[st]||0})`}
+                </button>
+              ))
+            })()}
           </div>
           
           {/* Filtros de precio */}

@@ -25,7 +25,7 @@ public class HomeController {
     public ResponseEntity<Map<String, Object>> apiRoot() {
         Map<String, Object> response = new HashMap<>();
         response.put("message", "AppMarket Backend API");
-        response.put("version", "1.0.0");
+        response.put("version", "1.0.3");
         response.put("status", "running");
         
         Map<String, String> endpoints = new HashMap<>();

@@ -1,4 +1,5 @@
 const KEY = 'cart'
+const LAST_QTY_PREFIX = 'lastQty:'
 
 function read() {
   try {
@@ -55,5 +56,24 @@ export function getCartTotals() {
   const subtotal = items.reduce((sum, i) => sum + Number(i.price) * Number(i.quantity), 0)
   const totalItems = items.reduce((sum, i) => sum + Number(i.quantity), 0)
   return { subtotal, totalItems }
+}
+
+export function getLastQty(productId) {
+  try {
+    const raw = localStorage.getItem(LAST_QTY_PREFIX + String(productId))
+    const n = Number(raw)
+    return n > 0 ? n : 1
+  } catch {
+    return 1
+  }
+}
+
+export function setLastQty(productId, qty) {
+  try {
+    const n = Math.max(1, Number(qty) || 1)
+    localStorage.setItem(LAST_QTY_PREFIX + String(productId), String(n))
+  } catch {
+    // noop
+  }
 }
 

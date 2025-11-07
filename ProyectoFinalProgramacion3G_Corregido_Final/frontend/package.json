@@ -1,7 +1,7 @@
 {
   "name": "appmarket-frontend",
   "description": "Frontend de AppMarket - Marketplace de productos con React y Vite",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "type": "module",
   "author": "Equipo de desarrollo AppMarket",

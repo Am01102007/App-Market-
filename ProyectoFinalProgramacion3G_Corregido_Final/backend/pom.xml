@@ -13,7 +13,7 @@
 
     <groupId>co.edu.uniquindio</groupId>
     <artifactId>ProyectoFinalp3</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <name>AppMarket Backend</name>
     <description>API REST para AppMarket - Marketplace de productos con autenticación JWT</description>
     <url>https://github.com/tu-usuario/appmarket</url>

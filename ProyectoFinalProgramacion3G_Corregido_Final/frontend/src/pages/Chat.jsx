@@ -1,14 +1,57 @@
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Header from '../components/Header'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import api from '../lib/api'
+import Toast from '../components/ui/Toast'
+import { addToCart } from '../lib/cart'
+import { fetchActiveProducts } from '../lib/products'
 
 export default function Chat() {
   const [messages, setMessages] = useState([
     { id: 1, sender: 'Asistente', content: 'Hola 👋 ¿En qué puedo ayudarte a comprar hoy?' },
   ])
   const [newMessage, setNewMessage] = useState('')
+  const [toast, setToast] = useState({ message: '', type: 'info' })
+  const [catalog, setCatalog] = useState([])
+  const [qtyMap, setQtyMap] = useState({})
+
+  useEffect(() => {
+    let mounted = true
+    fetchActiveProducts()
+      .then((data) => { if (mounted) setCatalog(Array.isArray(data) ? data : []) })
+      .catch(() => { /* silencioso: sin catálogo no mostramos acciones */ })
+    return () => { mounted = false }
+  }, [])
+
+  const normalize = (s) => (s||'')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ') // colapsar espacios
+    .trim()
+
+  const scoreMatch = (textNorm, nameNorm) => {
+    if (!textNorm || !nameNorm) return 0
+    if (textNorm.includes(nameNorm)) return nameNorm.length / textNorm.length
+    const tTokens = textNorm.split(' ')
+    const nTokens = nameNorm.split(' ')
+    const overlap = nTokens.filter(tok => tok.length > 2 && tTokens.includes(tok)).length
+    return overlap / Math.max(1, nTokens.length)
+  }
+
+  const findSuggestedProduct = (text) => {
+    const t = normalize(text)
+    let best = null
+    let bestScore = 0
+    for (const p of catalog) {
+      const nameNorm = normalize(p.name)
+      const s = scoreMatch(t, nameNorm)
+      if (s > bestScore) { best = p; bestScore = s }
+    }
+    return bestScore >= 0.4 ? best : null
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -40,13 +83,42 @@ export default function Chat() {
             <h1 className="text-xl font-semibold text-neutral-900">Chat</h1>
           </div>
           <div className="flex-grow p-4 space-y-4 overflow-y-auto">
-            {messages.map((msg) => (
-              <div key={msg.id} className={msg.sender === 'Tú' ? 'flex justify-end' : 'flex justify-start'}>
-                <div className={msg.sender === 'Tú' ? 'bg-neutral-200 text-neutral-900 rounded-lg p-3 max-w-xs' : 'bg-primary-light text-primary-dark rounded-lg p-3 max-w-xs'}>
-                  <p><strong>{msg.sender}:</strong> {msg.content}</p>
+            {messages.map((msg) => {
+              const suggested = msg.sender !== 'Tú' ? findSuggestedProduct(msg.content) : null
+              return (
+                <div key={msg.id} className={msg.sender === 'Tú' ? 'flex justify-end' : 'flex justify-start'}>
+                  <div className={msg.sender === 'Tú' ? 'bg-neutral-200 text-neutral-900 rounded-lg p-3 max-w-xs' : 'bg-primary-light text-primary-dark rounded-lg p-3 max-w-xs'}>
+                    <p><strong>{msg.sender}:</strong> {msg.content}</p>
+                    {suggested && (
+                      <div className="mt-2">
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            min={1}
+                            max={99}
+                            className="w-20"
+                            value={qtyMap[suggested.id] ?? 1}
+                            onChange={(e) => setQtyMap((prev) => ({ ...prev, [suggested.id]: Math.max(1, Number(e.target.value) || 1) }))}
+                          />
+                          <Button 
+                            variant="success" 
+                            onClick={() => {
+                              try {
+                                const q = qtyMap[suggested.id] ?? 1
+                                addToCart(suggested, q)
+                                setToast({ message: `Añadido al carrito: ${suggested.name} ×${q}`, type: 'success' })
+                              } catch {
+                                setToast({ message: 'No se pudo añadir al carrito', type: 'error' })
+                              }
+                            }}
+                          >Añadir "{suggested.name}"</Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
           <div className="p-4 border-t border-neutral-200">
             <form className="flex items-center gap-3" onSubmit={handleSubmit}>
@@ -55,6 +127,7 @@ export default function Chat() {
             </form>
           </div>
         </div>
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: 'info' })} />
       </main>
     </div>
   )
@@ -62,4 +135,4 @@ export default function Chat() {
 /**
  * Página de chat.
  * Muestra conversaciones y mensajes en tiempo real.
- */
+  */

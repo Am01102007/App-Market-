@@ -39,6 +39,24 @@ public class AiAssistantService {
                 .map(p -> String.format("- %s (%.2f) [%s]", p.getName(), p.getPrice(), p.getCategory() != null ? p.getCategory().getName() : "sin categoría"))
                 .collect(Collectors.joining("\n"));
 
+        // Fallback local si no hay API key configurada
+        if (groqApiKey == null || groqApiKey.isBlank()) {
+            String lower = userMessage.toLowerCase();
+            // Heurística: si pide "añadir" o "agregar", intenta sugerir producto coincidente
+            if (lower.contains("añadir") || lower.contains("agregar") || lower.contains("carrito")) {
+                Product match = catalog.stream()
+                        .filter(p -> lower.contains(p.getName().toLowerCase()))
+                        .findFirst()
+                        .orElse(catalog.stream().findFirst().orElse(null));
+                if (match != null) {
+                    return String.format("Puedes añadir '%s' (%.2f) a tu carrito. ¿Cantidad 1-3?", match.getName(), match.getPrice());
+                }
+            }
+            // Respuesta por defecto basada en catálogo
+            return "(Modo offline) Te ayudo a explorar el catálogo. Algunos destacados:\n" + catalogSummary +
+                    "\nPide: 'recomienda portátiles' o 'añadir <producto> al carrito'.";
+        }
+
         String systemPrompt = "Eres un asistente de compras para AppMarket. " +
                 "Ayuda al usuario a: descubrir productos, comparar opciones, y decidir qué añadir al carrito. " +
                 "Responde breve, clara y con pasos accionables. Si el usuario pide añadir al carrito, sugiere nombre del producto y cantidad. " +
@@ -67,7 +85,8 @@ public class AiAssistantService {
 
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() >= 400) {
-            throw new RuntimeException("Groq API error: status=" + response.statusCode() + " body=" + response.body());
+            // Devolver un mensaje amable sin romper el flujo
+            return "No pude contactar al asistente externo (" + response.statusCode() + "). Basado en el catálogo: \n" + catalogSummary;
         }
         JsonNode json = objectMapper.readTree(response.body());
         JsonNode content = json.path("choices").path(0).path("message").path("content");
