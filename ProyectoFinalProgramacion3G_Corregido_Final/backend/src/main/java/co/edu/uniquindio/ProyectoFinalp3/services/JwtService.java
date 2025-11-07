@@ -46,8 +46,10 @@ public class JwtService {
      * @return String que representa el token JWT firmado
      */
     public String generateToken(UUID userId) {
+        // Validación defensiva del secreto
+        String key = (secretKey == null || secretKey.isBlank()) ? "change-me" : secretKey;
         // Usamos el algoritmo HMAC256 para firmar el token
-        Algorithm algorithm = Algorithm.HMAC256(secretKey);
+        Algorithm algorithm = Algorithm.HMAC256(key);
 
         // Generamos el token
         return JWT.create()
@@ -98,8 +100,10 @@ public class JwtService {
      * @throws com.auth0.jwt.exceptions.JWTVerificationException si el token es inválido
      */
     private DecodedJWT decodeToken(String token) {
+        // Validación defensiva del secreto
+        String key = (secretKey == null || secretKey.isBlank()) ? "change-me" : secretKey;
         // Usamos el mismo algoritmo para verificar y decodificar el token
-        Algorithm algorithm = Algorithm.HMAC256(secretKey);
+        Algorithm algorithm = Algorithm.HMAC256(key);
         return JWT.require(algorithm)
                 .build()
                 .verify(token); // Verifica y decodifica el token
