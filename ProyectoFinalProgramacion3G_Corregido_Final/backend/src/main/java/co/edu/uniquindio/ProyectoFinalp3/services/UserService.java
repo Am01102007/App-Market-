@@ -9,6 +9,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class UserService {
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     /**
      * Repositorio para acceder a los datos de usuarios en la base de datos.
@@ -43,8 +46,24 @@ public class UserService {
      */
     public User authenticateUser(String email, String password) {
         User user = userRepository.findByEmail(email);
-        if (user != null && passwordEncoder.matches(password, user.getPassword())) {
-            return user;
+        if (user == null) {
+            return null;
+        }
+
+        String storedHash = user.getPassword();
+        if (storedHash == null || storedHash.isBlank()) {
+            // Datos legacy: mejor tratar como credenciales inválidas que lanzar 500
+            log.warn("Usuario {} tiene contraseña vacía/nula en BD", email);
+            return null;
+        }
+
+        try {
+            if (passwordEncoder.matches(password, storedHash)) {
+                return user;
+            }
+        } catch (IllegalArgumentException ex) {
+            // Ocurre si el hash no tiene formato BCrypt válido (ej. texto plano)
+            log.warn("Hash de contraseña inválido para usuario {}: {}", email, ex.getMessage());
         }
         return null;
     }

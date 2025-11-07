@@ -23,6 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -77,6 +78,10 @@ public class ProductController {
     /** Servicio para almacenamiento de imágenes */
     @Autowired
     private ImageStorageService imageStorageService;
+
+    /** Codificador de contraseñas para usuarios demo */
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     /**
      * Crea un nuevo producto en el sistema.
@@ -229,7 +234,7 @@ public class ProductController {
                 User newUser = new User();
                 newUser.setUsername("demo_seller1");
                 newUser.setEmail("demo1@appmarket.com");
-                newUser.setPassword("password123");
+                newUser.setPassword(passwordEncoder.encode("password123"));
                 return userRepository.save(newUser);
             });
 
@@ -237,7 +242,7 @@ public class ProductController {
                 User newUser = new User();
                 newUser.setUsername("demo_seller2");
                 newUser.setEmail("demo2@appmarket.com");
-                newUser.setPassword("password123");
+                newUser.setPassword(passwordEncoder.encode("password123"));
                 return userRepository.save(newUser);
             });
 

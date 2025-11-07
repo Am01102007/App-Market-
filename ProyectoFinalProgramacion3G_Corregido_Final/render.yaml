@@ -11,13 +11,13 @@ services:
       - key: SPRING_PROFILES_ACTIVE
         value: postgres
       - key: SPRING_DATASOURCE_URL
-        value: jdbc:postgresql://ep-broad-cake-a4jr924o-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+        value: jdbc:postgresql://ep-broad-cake-a4jr924o-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require
       - key: SPRING_DATASOURCE_USERNAME
         value: neondb_owner
       - key: SPRING_DATASOURCE_PASSWORD
         sync: false
       - key: ALLOWED_ORIGINS
-        value: http://localhost:5173
+        value: https://app-market-v2ks.onrender.com,http://localhost:5173
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRATION
