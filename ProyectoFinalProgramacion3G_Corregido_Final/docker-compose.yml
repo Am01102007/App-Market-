@@ -1,0 +1,25 @@
+version: "3.9"
+services:
+  db:
+    image: mysql:8.0
+    container_name: appmarket-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "1509"
+      MYSQL_DATABASE: "proyecto_final"
+      # Usaremos root desde Spring, por simplicidad inicial
+      MYSQL_USER: "root"
+      MYSQL_PASSWORD: "1509"
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    command: ["--default-authentication-plugin=mysql_native_password", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+networks:
+  default:
+    name: appmarket-net

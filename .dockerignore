@@ -1,0 +1,13 @@
+# Reduce Docker build context for root-level builds on Render
+/.vscode/
+/.git/
+node_modules/
+**/*.log
+
+# Include frontend for unified image (backend serves SPA)
+
+# Misc files not needed in image
+/ProyectoFinalProgramacion3G_Corregido_Final/docker-compose.yml
+/ProyectoFinalProgramacion3G_Corregido_Final/README.md
+/ProyectoFinalProgramacion3G_Corregido_Final/.gitignore
+/ProyectoFinalProgramacion3G_Corregido_Final/.dockerignore

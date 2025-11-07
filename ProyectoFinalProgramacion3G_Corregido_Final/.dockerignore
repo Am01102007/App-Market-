@@ -1,0 +1,12 @@
+# Reduce Docker build context when building from project subdirectory
+/.git/
+/.vscode/
+**/*.log
+
+# Include frontend for unified image (backend serves SPA)
+
+# Exclude compose and docs not needed in image
+/docker-compose.yml
+/README.md
+/.gitignore
+/.dockerignore

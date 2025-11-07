@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: app-market-v2ks
+    env: docker
+    plan: free
+    dockerfilePath: ProyectoFinalProgramacion3G_Corregido_Final/Dockerfile
+    dockerContext: ProyectoFinalProgramacion3G_Corregido_Final
+    healthCheckPath: /actuator/health
+    autoDeploy: true
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: postgres
+      - key: SPRING_DATASOURCE_URL
+        value: jdbc:postgresql://ep-broad-cake-a4jr924o-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+      - key: SPRING_DATASOURCE_USERNAME
+        value: neondb_owner
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: http://localhost:5173
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRATION
+        value: 86400000
+      - key: PORT
+        value: 8080

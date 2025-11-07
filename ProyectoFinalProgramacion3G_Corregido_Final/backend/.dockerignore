@@ -1,0 +1,15 @@
+# Ignorar artefactos y archivos innecesarios en el contexto de Docker
+target/
+.git/
+.gitignore
+.mvn/
+mvnw
+mvnw.cmd
+**/*.log
+**/*.tmp
+**/*.cache
+**/.DS_Store
+**/Thumbs.db
+src/test/
+README.md
+HELP.md
