@@ -52,8 +52,10 @@ public class DataLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        // Solo cargar datos si no existen
-        if (userRepository.count() == 0) {
+        // Cargar datos si falta información básica: usuarios o productos
+        long userCount = userRepository.count();
+        long productCount = productRepository.count();
+        if (userCount == 0 || productCount == 0) {
             loadInitialData();
         }
     }
@@ -64,6 +66,7 @@ public class DataLoader implements CommandLineRunner {
         user1.setFirstName("Juan");
         user1.setLastName("Pérez");
         user1.setEmail("juan@example.com");
+        user1.setUsername("juan");
         user1.setPassword(passwordEncoder.encode("password123"));
         user1.setCedula("12345678");
         user1.setAddress("Calle 123 #45-67");
@@ -74,6 +77,7 @@ public class DataLoader implements CommandLineRunner {
         user2.setFirstName("María");
         user2.setLastName("García");
         user2.setEmail("maria@example.com");
+        user2.setUsername("maria");
         user2.setPassword(passwordEncoder.encode("password123"));
         user2.setCedula("87654321");
         user2.setAddress("Carrera 89 #12-34");
@@ -84,6 +88,7 @@ public class DataLoader implements CommandLineRunner {
         admin.setFirstName("Admin");
         admin.setLastName("Sistema");
         admin.setEmail("admin@example.com");
+        admin.setUsername("admin");
         admin.setPassword(passwordEncoder.encode("admin123"));
         admin.setCedula("11111111");
         admin.setAddress("Oficina Central");
@@ -118,6 +123,7 @@ public class DataLoader implements CommandLineRunner {
         product1.setPrice(new BigDecimal("899.99"));
         product1.setImageUrl("https://example.com/samsung-galaxy.jpg");
         product1.setCategory(electronics);
+        product1.setStatus(co.edu.uniquindio.ProyectoFinalp3.enums.ProductStatus.ACTIVE);
         product1.setUser(user2);
         product1.setMarketPlace(marketplace);
         product1 = productRepository.save(product1);
@@ -128,6 +134,7 @@ public class DataLoader implements CommandLineRunner {
         product2.setPrice(new BigDecimal("29.99"));
         product2.setImageUrl("https://example.com/camiseta-deportiva.jpg");
         product2.setCategory(clothing);
+        product2.setStatus(co.edu.uniquindio.ProyectoFinalp3.enums.ProductStatus.ACTIVE);
         product2.setUser(user2);
         product2.setMarketPlace(marketplace);
         product2 = productRepository.save(product2);
@@ -138,6 +145,7 @@ public class DataLoader implements CommandLineRunner {
         product3.setPrice(new BigDecimal("45.50"));
         product3.setImageUrl("https://example.com/lampara-led.jpg");
         product3.setCategory(home);
+        product3.setStatus(co.edu.uniquindio.ProyectoFinalp3.enums.ProductStatus.ACTIVE);
         product3.setUser(user2);
         product3.setMarketPlace(marketplace);
         product3 = productRepository.save(product3);
