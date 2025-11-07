@@ -439,8 +439,8 @@ public class ProductController {
 
             Product product = productOpt.get();
             
-            // Si hay una imagen anterior local, eliminarla
-            if (product.getImageUrl() != null && !product.getImageUrl().startsWith("http")) {
+            // Si hay una imagen anterior, eliminarla (local o Cloudinary)
+            if (product.getImageUrl() != null && !product.getImageUrl().isEmpty()) {
                 imageStorageService.deleteImage(product.getImageUrl());
             }
 
@@ -489,8 +489,8 @@ public class ProductController {
 
             Category category = categoryOpt.get();
             
-            // Si hay una imagen anterior local, eliminarla
-            if (category.getImageUrl() != null && !category.getImageUrl().startsWith("http")) {
+            // Si hay una imagen anterior, eliminarla (local o Cloudinary)
+            if (category.getImageUrl() != null && !category.getImageUrl().isEmpty()) {
                 imageStorageService.deleteImage(category.getImageUrl());
             }
 
@@ -503,6 +503,40 @@ public class ProductController {
             
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error al subir imagen: " + e.getMessage());
+        }
+    }
+
+    // Endpoint para actualizar una categoría
+    @PutMapping("/categories/{id}")
+    public ResponseEntity<?> updateCategory(@PathVariable UUID id, @RequestBody Category updates) {
+        try {
+            Optional<Category> categoryOpt = categoryRepository.findById(id);
+            if (categoryOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Categoría no encontrada");
+            }
+            Category category = categoryOpt.get();
+            if (updates.getName() != null && !updates.getName().isBlank()) category.setName(updates.getName());
+            if (updates.getDescription() != null) category.setDescription(updates.getDescription());
+            if (updates.getImageUrl() != null) category.setImageUrl(updates.getImageUrl());
+            Category saved = categoryRepository.save(category);
+            return ResponseEntity.ok(saved);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error al actualizar categoría: " + e.getMessage());
+        }
+    }
+
+    // Endpoint para eliminar una categoría
+    @DeleteMapping("/categories/{id}")
+    public ResponseEntity<?> deleteCategory(@PathVariable UUID id) {
+        try {
+            Optional<Category> categoryOpt = categoryRepository.findById(id);
+            if (categoryOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Categoría no encontrada");
+            }
+            categoryRepository.deleteById(id);
+            return ResponseEntity.ok("Categoría eliminada");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error al eliminar categoría: " + e.getMessage());
         }
     }
 

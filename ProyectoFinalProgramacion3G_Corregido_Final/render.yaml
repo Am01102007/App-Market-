@@ -24,3 +24,13 @@ services:
         value: 86400000
       - key: PORT
         value: 8080
+      - key: GROQ_API_KEY
+        sync: false
+      - key: CLOUDINARY_URL
+        value: cloudinary://995771663654765:Uvd1-YEGybfTqE1trSbWAwMBiyQ@djdconke7
+      - key: CLOUDINARY_CLOUD_NAME
+        value: djdconke7
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false

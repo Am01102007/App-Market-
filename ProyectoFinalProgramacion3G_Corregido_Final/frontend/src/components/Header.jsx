@@ -38,7 +38,7 @@ export default function Header({ showBack = false }) {
   };
 
   return (
-    <header className="bg-white shadow-md sticky top-0 z-40">
+    <header className="bg-white/80 backdrop-blur shadow-md sticky top-0 z-40">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Sección izquierda: Logo y navegación principal */}
@@ -54,16 +54,28 @@ export default function Header({ showBack = false }) {
                     key={link.to}
                     to={link.to}
                     className={({ isActive }) =>
-                      `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      `px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                         isActive
-                          ? 'bg-primary text-white'
-                          : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+                          ? 'bg-gradient-primary text-white shadow-soft'
+                          : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
                       }`
                     }
                   >
                     {link.text}
                   </NavLink>
                 ))}
+                <NavLink
+                  to="/cart"
+                  className={({ isActive }) =>
+                    `px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                      isActive
+                        ? 'bg-gradient-primary text-white shadow-soft'
+                        : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
+                    }`
+                  }
+                >
+                  Carrito
+                </NavLink>
               </div>
             </div>
           </div>

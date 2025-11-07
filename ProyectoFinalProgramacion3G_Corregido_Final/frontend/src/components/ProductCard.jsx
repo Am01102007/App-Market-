@@ -16,7 +16,7 @@ import { Link } from 'react-router-dom';
  * @returns {JSX.Element} Tarjeta de producto clickeable
  */
 export default function ProductCard({ product }) {
-  const { id, name, imageUrl, category, price } = product;
+  const { id, name, imageUrl, category, price, status } = product;
   
   // Convierte el precio a número para asegurar formato correcto
   const displayPrice = typeof price === 'number' ? price : Number(price);
@@ -24,10 +24,12 @@ export default function ProductCard({ product }) {
   // Extrae el nombre de la categoría si es un objeto, sino usa el valor directo
   const categoryName = typeof category === 'object' && category?.name ? category.name : category;
 
+  const statusLabel = ({ ACTIVE: 'Activo', INACTIVE: 'Inactivo', SOLD: 'Vendido' }[status]) || null;
+
   return (
-    <Link to={`/product/${id}`} className="block bg-white border border-neutral-200 rounded-lg shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden group">
+    <Link to={`/product/${id}`} className="block bg-white/90 backdrop-blur border border-neutral-200 rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group">
       {/* Contenedor de imagen con fallback */}
-      <div className="w-full h-48 bg-neutral-200/50 overflow-hidden">
+      <div className="relative w-full h-48 bg-neutral-200/50 overflow-hidden">
         {imageUrl ? (
           <img 
             src={imageUrl} 
@@ -47,6 +49,11 @@ export default function ProductCard({ product }) {
         >
           Sin imagen
         </div>
+        {statusLabel && (
+          <span className="absolute top-2 right-2 text-xs px-2 py-1 rounded-full bg-white/90 border border-neutral-200 text-neutral-700 shadow-soft">
+            {statusLabel}
+          </span>
+        )}
       </div>
       {/* Información del producto */}
       <div className="p-4">

@@ -13,7 +13,7 @@
 
     <groupId>co.edu.uniquindio</groupId>
     <artifactId>ProyectoFinalp3</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.2</version>
     <name>AppMarket Backend</name>
     <description>API REST para AppMarket - Marketplace de productos con autenticación JWT</description>
     <url>https://github.com/tu-usuario/appmarket</url>
@@ -115,6 +115,13 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Cloudinary SDK para subir/borrar imágenes en la nube -->
+        <dependency>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http44</artifactId>
+            <version>1.37.0</version>
         </dependency>
 
     </dependencies>

@@ -3,9 +3,10 @@ import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import { useState, useEffect } from 'react'
 import Toast from '../components/ui/Toast'
-import { createProduct, fetchCategories, createCategory } from '../lib/products'
+import { createProduct, fetchCategories, createCategory, updateCategory, deleteCategory } from '../lib/products'
 import { getUsername } from '../lib/auth'
 import Header from '../components/Header'
+import ConfirmModal from '../components/ui/ConfirmModal'
 
 export default function Publish() {
   const navigate = useNavigate()
@@ -23,6 +24,11 @@ export default function Publish() {
   const [newCategoryName, setNewCategoryName] = useState('')
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false)
   const [creatingCategory, setCreatingCategory] = useState(false)
+  const [editingCategoryId, setEditingCategoryId] = useState(null)
+  const [editCategoryName, setEditCategoryName] = useState('')
+  const [editCategoryDescription, setEditCategoryDescription] = useState('')
+  const [confirmDeleteCatId, setConfirmDeleteCatId] = useState(null)
+  const [deletingCategory, setDeletingCategory] = useState(false)
 
   useEffect(() => {
     loadCategories()
@@ -66,6 +72,49 @@ export default function Publish() {
       setToast({ message: 'Error al crear la categoría', type: 'error' })
     } finally {
       setCreatingCategory(false)
+    }
+  }
+
+  const startEditCategory = (cat) => {
+    setEditingCategoryId(cat.id)
+    setEditCategoryName(cat.name || '')
+    setEditCategoryDescription(cat.description || '')
+  }
+
+  const cancelEditCategory = () => {
+    setEditingCategoryId(null)
+    setEditCategoryName('')
+    setEditCategoryDescription('')
+  }
+
+  const saveEditCategory = async () => {
+    if (!editingCategoryId) return
+    try {
+      await updateCategory(editingCategoryId, { name: editCategoryName, description: editCategoryDescription })
+      await loadCategories()
+      setToast({ message: 'Categoría actualizada', type: 'success' })
+      cancelEditCategory()
+    } catch (err) {
+      console.error('Error actualizando categoría', err)
+      setToast({ message: 'No se pudo actualizar la categoría', type: 'error' })
+    }
+  }
+
+  const removeCategory = async () => {
+    if (!confirmDeleteCatId) return
+    try {
+      setDeletingCategory(true)
+      setToast({ message: 'Eliminando categoría...', type: 'info' })
+      await deleteCategory(confirmDeleteCatId)
+      await loadCategories()
+      setToast({ message: 'Categoría eliminada', type: 'success' })
+      if (String(editingCategoryId) === String(confirmDeleteCatId)) cancelEditCategory()
+      setConfirmDeleteCatId(null)
+    } catch (err) {
+      console.error('Error eliminando categoría', err)
+      setToast({ message: 'No se pudo eliminar la categoría', type: 'error' })
+    } finally {
+      setDeletingCategory(false)
     }
   }
 
@@ -276,6 +325,53 @@ export default function Publish() {
                   </Button>
                 </div>
               )}
+
+              {/* Gestión de categorías: editar/eliminar */}
+              <div className="mt-4 border-t border-neutral-200 pt-4">
+                <h3 className="text-sm font-semibold text-neutral-700 mb-2">Administrar categorías</h3>
+                <div className="space-y-2">
+                  {categories.map((cat) => (
+                    <div key={cat.id} className="flex items-start gap-2 bg-neutral-50 border border-neutral-200 rounded-md p-2">
+                      {editingCategoryId === cat.id ? (
+                        <div className="flex-1 space-y-2">
+                          <input
+                            type="text"
+                            value={editCategoryName}
+                            onChange={(e)=>setEditCategoryName(e.target.value)}
+                            className="w-full px-3 py-2 rounded-md bg-white border border-neutral-300 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Nombre"
+                          />
+                          <input
+                            type="text"
+                            value={editCategoryDescription}
+                            onChange={(e)=>setEditCategoryDescription(e.target.value)}
+                            className="w-full px-3 py-2 rounded-md bg-white border border-neutral-300 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Descripción"
+                          />
+                          <div className="flex gap-2">
+                            <Button variant="success" onClick={saveEditCategory}>Guardar</Button>
+                            <Button variant="ghost" onClick={cancelEditCategory}>Cancelar</Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex-1">
+                          <p className="font-medium">{cat.name}</p>
+                          <p className="text-sm text-neutral-600">{cat.description || '—'}</p>
+                        </div>
+                      )}
+                      <div className="flex flex-col gap-1">
+                        {editingCategoryId !== cat.id && (
+                          <Button variant="ghost" onClick={()=>startEditCategory(cat)}>Editar</Button>
+                        )}
+                        <Button variant="danger" onClick={()=>setConfirmDeleteCatId(cat.id)}>Eliminar</Button>
+                      </div>
+                    </div>
+                  ))}
+                  {categories.length === 0 && (
+                    <p className="text-sm text-neutral-600">No hay categorías creadas.</p>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -308,6 +404,16 @@ export default function Publish() {
           </div>
         )}
       </main>
+      <ConfirmModal
+        open={!!confirmDeleteCatId}
+        title="Eliminar categoría"
+        message={`¿Deseas eliminar esta categoría? Los productos asociados pueden verse afectados.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        loading={deletingCategory}
+        onConfirm={removeCategory}
+        onCancel={()=>setConfirmDeleteCatId(null)}
+      />
     </div>
   )
 }

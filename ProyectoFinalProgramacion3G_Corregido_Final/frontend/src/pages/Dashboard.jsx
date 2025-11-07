@@ -21,8 +21,13 @@ import Input from '../components/ui/Input';
 export default function Dashboard() {
   const navigate = useNavigate();
   // Estados para productos destacados y manejo de errores
+  const [allProducts, setAllProducts] = useState([]);
   const [featured, setFeatured] = useState([]);
   const [error, setError] = useState(null);
+  const [sort, setSort] = useState('relevance');
+  const [category, setCategory] = useState('all');
+  const [priceMin, setPriceMin] = useState('');
+  const [priceMax, setPriceMax] = useState('');
 
   /**
    * Función para cerrar sesión del usuario.
@@ -40,15 +45,41 @@ export default function Dashboard() {
     let mounted = true;
     fetchActiveProducts()
       .then((data) => { 
-        if (mounted) setFeatured(Array.isArray(data) ? data.slice(0,6) : []); 
+        if (mounted) {
+          const list = Array.isArray(data) ? data : [];
+          setAllProducts(list);
+        }
       })
       .catch((err) => { 
         console.error('Error cargando destacados', err); 
         setError('No se pudieron cargar los productos destacados. Mostrando datos de ejemplo.');
-        if (mounted) setFeatured(sampleProducts.slice(0,6)); 
+        if (mounted) {
+          setAllProducts(sampleProducts);
+        }
       });
     return () => { mounted = false };
   }, []);
+
+  // Aplicar filtros y orden para mostrar productos destacados
+  useEffect(() => {
+    let list = [...allProducts];
+    // Filtro por categoría
+    if (category !== 'all') {
+      list = list.filter(p => (p.category?.name || p.category || '').toLowerCase() === category.toLowerCase());
+    }
+    // Filtros de precio
+    const min = priceMin ? Number(priceMin) : null;
+    const max = priceMax ? Number(priceMax) : null;
+    if (min != null) list = list.filter(p => Number(p.price) >= min);
+    if (max != null) list = list.filter(p => Number(p.price) <= max);
+    // Ordenamiento
+    if (sort === 'price_asc') list = [...list].sort((a,b) => Number(a.price) - Number(b.price));
+    else if (sort === 'price_desc') list = [...list].sort((a,b) => Number(b.price) - Number(a.price));
+    else if (sort === 'name_asc') list = [...list].sort((a,b) => (a.name||'').localeCompare(b.name||''));
+
+    // Limitar a destacados (primeros 6)
+    setFeatured(list.slice(0,6));
+  }, [allProducts, sort, category, priceMin, priceMax]);
 
   /**
    * Maneja el envío del formulario de búsqueda.
@@ -96,6 +127,48 @@ export default function Dashboard() {
             <div className="bg-white border border-neutral-200 rounded-lg p-5">
               <h3 className="font-semibold mb-2">Favoritos</h3>
               <p className="text-neutral-600">Has marcado 4 productos como favoritos.</p>
+            </div>
+          </div>
+
+          {/* Filtros y ordenamiento */}
+          <div className="mt-8 bg-white border border-neutral-200 rounded-lg p-4">
+            <div className="flex flex-wrap items-end gap-4">
+              <div>
+                <span className="text-sm text-neutral-600">Categoría</span>
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  {['all','tecnologia','hogar','moda'].map((cat) => (
+                    <button 
+                      key={cat}
+                      onClick={() => setCategory(cat)}
+                      className={`px-3 py-1 rounded-full border ${
+                        category===cat
+                          ? 'bg-primary text-white border-primary'
+                          : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-100'
+                      }`}
+                    >
+                      {cat === 'all' ? 'Todos' : cat[0].toUpperCase()+cat.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-end gap-3">
+                <Input label="Precio mínimo" type="number" value={priceMin} onChange={(e)=>setPriceMin(e.target.value)} />
+                <Input label="Precio máximo" type="number" value={priceMax} onChange={(e)=>setPriceMax(e.target.value)} />
+                <Button variant="ghost" onClick={()=>{ setPriceMin(''); setPriceMax(''); }}>Limpiar</Button>
+              </div>
+              <div className="ml-auto">
+                <span className="text-sm text-neutral-600">Ordenar</span>
+                <select 
+                  value={sort}
+                  onChange={(e)=>setSort(e.target.value)}
+                  className="ml-2 px-3 py-2 rounded-lg bg-white border border-neutral-300 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary-light"
+                >
+                  <option value="relevance">Relevancia</option>
+                  <option value="price_asc">Precio ascendente</option>
+                  <option value="price_desc">Precio descendente</option>
+                  <option value="name_asc">Nombre (A-Z)</option>
+                </select>
+              </div>
             </div>
           </div>
 

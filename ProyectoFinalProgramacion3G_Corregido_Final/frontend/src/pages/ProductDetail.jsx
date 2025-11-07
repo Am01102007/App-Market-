@@ -3,8 +3,10 @@ import Button from '../components/ui/Button'
 import Toast from '../components/ui/Toast'
 import Skeleton from '../components/ui/Skeleton'
 import { sampleProducts } from '../lib/sampleProducts'
+import { addToCart } from '../lib/cart'
 import { fetchProductById, updateProduct, deleteProduct } from '../lib/products'
 import Header from '../components/Header'
+import ConfirmModal from '../components/ui/ConfirmModal'
 import { useEffect, useState } from 'react'
 
 export default function ProductDetail() {
@@ -16,6 +18,8 @@ export default function ProductDetail() {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({ name: '', price: '', category: 'tecnologia', imageUrl: '', status: 'ACTIVE' })
   const [toast, setToast] = useState({ message: '', type: 'info' })
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -70,12 +74,17 @@ export default function ProductDetail() {
 
   const removeProduct = async () => {
     try {
+      setDeleting(true)
+      setToast({ message: 'Eliminando producto...', type: 'info' })
       await deleteProduct(id)
       setToast({ message: 'Producto eliminado', type: 'success' })
+      setShowConfirmDelete(false)
       setTimeout(() => navigate('/catalog'), 800)
     } catch (err) {
       console.error('Error eliminando producto', err)
       setToast({ message: 'No se pudo eliminar', type: 'error' })
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -134,15 +143,16 @@ export default function ProductDetail() {
                   <div className="flex-grow">
                     <p className="text-sm text-neutral-500 uppercase tracking-wider">{typeof product.category === 'object' && product.category?.name ? product.category.name : product.category || '—'}</p>
                     <h1 className="text-3xl font-bold mt-1">{product.name}</h1>
-                    <p className="text-neutral-500 mt-1">Estado: {product.status || '—'}</p>
+                    <p className="text-neutral-500 mt-1">Estado: {({ ACTIVE: 'Activo', INACTIVE: 'Inactivo', SOLD: 'Vendido' }[product.status]) || product.status || '—'}</p>
                     <p className="mt-4 text-3xl font-semibold text-primary">${Number(product.price)?.toFixed ? Number(product.price).toFixed(2) : product.price}</p>
                   </div>
 
                   <div className="mt-6 flex flex-wrap gap-3 border-t border-neutral-200 pt-6">
                     <Button variant="primary" to={'/chat'}>Abrir chat</Button>
+                    <Button variant="success" onClick={() => { try { addToCart(product, 1); setToast({ message: 'Añadido al carrito', type: 'success' }); } catch(e) { setToast({ message: 'No se pudo añadir al carrito', type: 'error' }); } }}>Agregar al carrito</Button>
                     <Button variant="secondary">Agregar a favoritos</Button>
                     <Button variant="ghost" onClick={startEdit}>Editar</Button>
-                    <Button variant="danger" onClick={removeProduct}>Eliminar</Button>
+                    <Button variant="danger" onClick={() => setShowConfirmDelete(true)}>Eliminar</Button>
                   </div>
                 </>
               ) : (
@@ -191,6 +201,17 @@ export default function ProductDetail() {
             <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: 'info' })} />
           </div>
         )}
+
+        <ConfirmModal
+          open={showConfirmDelete}
+          title="Eliminar producto"
+          message={`¿Deseas eliminar "${product?.name || ''}"? Esta acción no se puede deshacer.`}
+          confirmText="Eliminar"
+          cancelText="Cancelar"
+          loading={deleting}
+          onConfirm={removeProduct}
+          onCancel={() => setShowConfirmDelete(false)}
+        />
       </main>
     </div>
   )
