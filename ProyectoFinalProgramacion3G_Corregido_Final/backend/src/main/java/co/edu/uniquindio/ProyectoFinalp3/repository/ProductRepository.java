@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.List;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, UUID> {
@@ -22,6 +23,10 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     @Query("SELECT p FROM Product p WHERE p.category.name = :category")
     List<Product> findByCategory(@Param("category") String category);
     List<Product> findByStatus(ProductStatus status);
+    
+    // Consultas por múltiples estados (para compatibilidad con datos en Neon)
+    @Query("SELECT p FROM Product p WHERE p.status IN :statuses")
+    List<Product> findByStatusIn(@Param("statuses") List<ProductStatus> statuses);
     @Query("SELECT p FROM Product p WHERE p.category.name = :categoryName")
     List<Product> findByCategory_Name(@Param("categoryName") String categoryName);
     
@@ -31,4 +36,7 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     
     @Query("SELECT p FROM Product p WHERE p.status = :status AND (LOWER(p.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR LOWER(p.description) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
     List<Product> findByStatusAndNameOrDescriptionContainingIgnoreCase(@Param("status") ProductStatus status, @Param("searchTerm") String searchTerm);
+
+    @Query("SELECT p FROM Product p WHERE p.status IN :statuses AND (LOWER(p.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR LOWER(p.description) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
+    List<Product> findByStatusesInAndNameOrDescriptionContainingIgnoreCase(@Param("statuses") List<ProductStatus> statuses, @Param("searchTerm") String searchTerm);
 }

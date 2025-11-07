@@ -11,6 +11,7 @@ export default function Publish() {
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
+  const [quantity, setQuantity] = useState('1')
   const [category, setCategory] = useState('')
   const [imageUrl, setImageUrl] = useState('')
   const [imageFile, setImageFile] = useState(null)
@@ -99,6 +100,7 @@ export default function Publish() {
         category: { name: category }, // Enviar como objeto con nombre
         imageUrl: finalImageUrl,
         description,
+        availableQuantity: Number(quantity),
         status: 'ACTIVE',
       }
       
@@ -140,6 +142,17 @@ export default function Publish() {
               placeholder="0.00" 
               value={price} 
               onChange={(e) => setPrice(e.target.value)} 
+              required
+            />
+            <Input
+              id="quantity"
+              label="Cantidad"
+              type="number"
+              min="1"
+              step="1"
+              placeholder="1"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
               required
             />
 

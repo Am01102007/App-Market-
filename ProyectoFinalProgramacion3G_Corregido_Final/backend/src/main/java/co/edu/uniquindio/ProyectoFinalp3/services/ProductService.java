@@ -148,7 +148,8 @@ public class ProductService {
      * @return Lista de productos que tienen el estado especificado
      */
     public List<Product> getActiveProducts(ProductStatus status) {  
-        return productRepository.findByStatus(status);
+        // Incluir productos con estado ACTIVE y AVAILABLE para compatibilidad con Neon
+        return productRepository.findByStatusIn(java.util.Arrays.asList(ProductStatus.ACTIVE, ProductStatus.AVAILABLE));
     }
     
     /**
@@ -176,6 +177,9 @@ public class ProductService {
         if (searchTerm == null || searchTerm.trim().isEmpty()) {
             return getActiveProducts(ProductStatus.ACTIVE);
         }
-        return productRepository.findByStatusAndNameOrDescriptionContainingIgnoreCase(ProductStatus.ACTIVE, searchTerm.trim());
+        return productRepository.findByStatusesInAndNameOrDescriptionContainingIgnoreCase(
+                java.util.Arrays.asList(ProductStatus.ACTIVE, ProductStatus.AVAILABLE),
+                searchTerm.trim()
+        );
     }
 }

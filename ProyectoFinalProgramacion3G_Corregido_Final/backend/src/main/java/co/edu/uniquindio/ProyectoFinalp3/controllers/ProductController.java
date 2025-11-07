@@ -100,10 +100,22 @@ public class ProductController {
             System.out.println("Username recibido: " + username);
             System.out.println("Producto recibido: " + product.getName());
             System.out.println("Categoría recibida: " + (product.getCategory() != null ? product.getCategory().getName() : "null"));
+
+            // Validaciones mínimas de datos requeridos
+            if (product.getName() == null || product.getName().trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El nombre del producto es obligatorio");
+            }
+            if (product.getPrice() == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El precio del producto es obligatorio");
+            }
+            // Cantidad disponible por defecto si no se envía
+            if (product.getAvailableQuantity() == null) {
+                product.setAvailableQuantity(1);
+            }
             
             // Si se proporciona una categoría por nombre, buscarla o crearla
-            if (product.getCategory() != null && product.getCategory().getName() != null) {
-                String categoryName = product.getCategory().getName();
+            if (product.getCategory() != null && product.getCategory().getName() != null && !product.getCategory().getName().trim().isEmpty()) {
+                String categoryName = product.getCategory().getName().trim();
                 System.out.println("Buscando categoría: " + categoryName);
                 Category category = categoryRepository.findByName(categoryName)
                     .orElseGet(() -> {
@@ -115,6 +127,19 @@ public class ProductController {
                     });
                 product.setCategory(category);
                 System.out.println("Categoría asignada: " + category.getName());
+            } else {
+                // Asignar categoría por defecto si no se especifica
+                String defaultCategoryName = "Otros";
+                Category defaultCategory = categoryRepository.findByName(defaultCategoryName)
+                    .orElseGet(() -> {
+                        System.out.println("Creando categoría por defecto: " + defaultCategoryName);
+                        Category newCategory = new Category();
+                        newCategory.setName(defaultCategoryName);
+                        newCategory.setDescription("Categoría por defecto para productos sin categoría específica");
+                        return categoryRepository.save(newCategory);
+                    });
+                product.setCategory(defaultCategory);
+                System.out.println("Categoría asignada por defecto: " + defaultCategory.getName());
             }
             
             // Asignar marketplace por defecto si no se especifica
@@ -143,7 +168,9 @@ public class ProductController {
         } catch (Exception e) {
             System.err.println("ERROR al crear producto: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error al crear el producto: " + e.getMessage());
+            String rootCause = e.getCause() != null ? e.getCause().getMessage() : null;
+            String fullMessage = rootCause != null ? (e.getMessage() + " | causa: " + rootCause) : e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error al crear el producto: " + fullMessage);
         }
     }
 
