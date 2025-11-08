@@ -56,23 +56,21 @@ export default function Chat() {
 
   const scoreMatch = (textNorm, nameNorm) => {
     if (!textNorm || !nameNorm) return 0
-    if (textNorm.includes(nameNorm)) return nameNorm.length / textNorm.length
     const tTokens = textNorm.split(' ')
     const nTokens = nameNorm.split(' ')
+    const includesRatio = textNorm.includes(nameNorm) ? (nameNorm.length / Math.max(1, textNorm.length)) : 0
     const overlap = nTokens.filter(tok => tok.length > 2 && tTokens.includes(tok)).length
-    return overlap / Math.max(1, nTokens.length)
+    const overlapRatio = overlap / Math.max(1, nTokens.length)
+    return Math.max(includesRatio, overlapRatio)
   }
 
-  const findSuggestedProduct = (text) => {
+  const findSuggestedProducts = (text) => {
     const t = normalize(text)
-    let best = null
-    let bestScore = 0
-    for (const p of catalog) {
-      const nameNorm = normalize(p.name)
-      const s = scoreMatch(t, nameNorm)
-      if (s > bestScore) { best = p; bestScore = s }
-    }
-    return bestScore >= 0.4 ? best : null
+    const scored = catalog.map(p => ({ product: p, score: scoreMatch(t, normalize(p.name)) }))
+      .filter(x => x.score >= 0.4)
+      .sort((a, b) => b.score - a.score)
+    // Limitar a los 3 más relevantes para no saturar el chat
+    return scored.slice(0, 3).map(x => x.product)
   }
 
   const handleSubmit = async (e) => {
@@ -107,54 +105,56 @@ export default function Chat() {
           </div>
           <div className="flex-grow p-4 space-y-4 overflow-y-auto">
             {messages.map((msg) => {
-              const suggested = msg.sender !== 'Tú' ? findSuggestedProduct(msg.content) : null
+              const suggestedList = msg.sender !== 'Tú' ? findSuggestedProducts(msg.content) : []
               return (
                 <div key={msg.id} className={msg.sender === 'Tú' ? 'flex justify-end' : 'flex justify-start'}>
                   <div className={msg.sender === 'Tú' ? 'bg-neutral-200 text-neutral-900 rounded-lg p-3 max-w-xs' : 'bg-primary-light text-primary-dark rounded-lg p-3 max-w-xs'}>
                     <p><strong>{msg.sender}:</strong> {msg.content}</p>
-                    {suggested && (
-                      <div className="mt-2">
-                        <div className="border border-neutral-300 rounded-lg bg-white text-neutral-900 shadow-sm overflow-hidden">
-                          <div className="flex gap-3 p-3 items-center">
-                            {suggested?.imageUrl && (
-                              <img src={suggested.imageUrl} alt={suggested.name} className="w-20 h-20 object-cover rounded-md border border-neutral-200" />
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold truncate">{suggested.name}</p>
-                              {typeof suggested?.category === 'object' ? (
-                                <p className="text-xs text-neutral-600 truncate">{suggested.category?.name}</p>
-                              ) : (
-                                <p className="text-xs text-neutral-600 truncate">{suggested?.category}</p>
+                    {suggestedList.length > 0 && (
+                      <div className="mt-2 space-y-2">
+                        {suggestedList.map((suggested) => (
+                          <div key={suggested.id} className="border border-neutral-300 rounded-lg bg-white text-neutral-900 shadow-sm overflow-hidden">
+                            <div className="flex gap-3 p-3 items-center">
+                              {suggested?.imageUrl && (
+                                <img src={suggested.imageUrl} alt={suggested.name} className="w-20 h-20 object-cover rounded-md border border-neutral-200" />
                               )}
-                              <p className="text-lg font-bold text-primary mt-1">${(Number(suggested.price))?.toFixed ? Number(suggested.price).toFixed(2) : suggested.price}</p>
-                              <div className="mt-2 flex items-center gap-2">
-                                <Input
-                                  type="number"
-                                  min={1}
-                                  max={99}
-                                  className="w-20"
-                                  value={qtyMap[suggested.id] ?? 1}
-                                  onChange={(e) => setQtyMap((prev) => ({ ...prev, [suggested.id]: Math.max(1, Number(e.target.value) || 1) }))}
-                                />
-                                <Button 
-                                  variant="primary" 
-                                  onClick={() => {
-                                    try {
-                                      const q = qtyMap[suggested.id] ?? 1
-                                      addToCart(suggested, q)
-                                      setToast({ message: `Añadido al carrito: ${suggested.name} ×${q}`, type: 'success' })
-                                    } catch {
-                                      setToast({ message: 'No se pudo añadir al carrito', type: 'error' })
-                                    }
-                                  }}
-                                >Añadir al carrito</Button>
-                                <Link to={`/product/${suggested.id}`} state={{ from: 'chat' }} className="flex-shrink-0">
-                                  <Button variant="outlineLight">Ver detalles</Button>
-                                </Link>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold truncate">{suggested.name}</p>
+                                {typeof suggested?.category === 'object' ? (
+                                  <p className="text-xs text-neutral-600 truncate">{suggested.category?.name}</p>
+                                ) : (
+                                  <p className="text-xs text-neutral-600 truncate">{suggested?.category}</p>
+                                )}
+                                <p className="text-lg font-bold text-primary mt-1">${(Number(suggested.price))?.toFixed ? Number(suggested.price).toFixed(2) : suggested.price}</p>
+                                <div className="mt-2 flex items-center gap-2">
+                                  <Input
+                                    type="number"
+                                    min={1}
+                                    max={99}
+                                    className="w-20"
+                                    value={qtyMap[suggested.id] ?? 1}
+                                    onChange={(e) => setQtyMap((prev) => ({ ...prev, [suggested.id]: Math.max(1, Number(e.target.value) || 1) }))}
+                                  />
+                                  <Button 
+                                    variant="primary" 
+                                    onClick={() => {
+                                      try {
+                                        const q = qtyMap[suggested.id] ?? 1
+                                        addToCart(suggested, q)
+                                        setToast({ message: `Añadido al carrito: ${suggested.name} ×${q}`, type: 'success' })
+                                      } catch {
+                                        setToast({ message: 'No se pudo añadir al carrito', type: 'error' })
+                                      }
+                                    }}
+                                  >Añadir al carrito</Button>
+                                  <Link to={`/product/${suggested.id}`} state={{ from: 'chat' }} className="flex-shrink-0">
+                                    <Button variant="outlineLight">Ver detalles</Button>
+                                  </Link>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
+                        ))}
                       </div>
                     )}
                   </div>
