@@ -101,17 +101,19 @@ export default function Chat() {
         <div className="bg-white border border-neutral-200 rounded-lg shadow-sm flex-grow flex flex-col">
           <div className="p-4 border-b border-neutral-200 flex items-center justify-between">
             <h1 className="text-xl font-semibold text-neutral-900">Chat</h1>
-            <Button variant="outlineLight" onClick={resetConversation}>Reiniciar</Button>
+            <Button variant="ghost" onClick={resetConversation}>Reiniciar</Button>
           </div>
           <div className="flex-grow p-4 space-y-4 overflow-y-auto">
             {messages.map((msg) => {
               const suggestedList = msg.sender !== 'Tú' ? findSuggestedProducts(msg.content) : []
               return (
                 <div key={msg.id} className={msg.sender === 'Tú' ? 'flex justify-end' : 'flex justify-start'}>
-                  <div className={msg.sender === 'Tú' ? 'bg-neutral-200 text-neutral-900 rounded-lg p-3 max-w-xs' : 'bg-primary-light text-primary-dark rounded-lg p-3 max-w-xs'}>
+                  <div className={msg.sender === 'Tú' ? 'bg-neutral-200 text-neutral-900 rounded-lg p-3 max-w-md' : 'bg-primary-light text-primary-dark rounded-lg p-3 max-w-md'}>
                     <p><strong>{msg.sender}:</strong> {msg.content}</p>
-                    {suggestedList.length > 0 && (
-                      <div className="mt-2 space-y-2">
+                  </div>
+                  {suggestedList.length > 0 && (
+                    <div className="mt-2 w-full max-w-lg">
+                      <div className="space-y-2">
                         {suggestedList.map((suggested) => (
                           <div key={suggested.id} className="border border-neutral-300 rounded-lg bg-white text-neutral-900 shadow-sm overflow-hidden">
                             <div className="flex gap-3 p-3 items-center">
@@ -148,7 +150,7 @@ export default function Chat() {
                                     }}
                                   >Añadir al carrito</Button>
                                   <Link to={`/product/${suggested.id}`} state={{ from: 'chat' }} className="flex-shrink-0">
-                                    <Button variant="outlineLight">Ver detalles</Button>
+                                    <Button variant="ghost">Ver detalles</Button>
                                   </Link>
                                 </div>
                               </div>
@@ -156,8 +158,8 @@ export default function Chat() {
                           </div>
                         ))}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )
             })}
