@@ -2,6 +2,7 @@ import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Header from '../components/Header'
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import api from '../lib/api'
 import Toast from '../components/ui/Toast'
 import { addToCart } from '../lib/cart'
@@ -125,6 +126,9 @@ export default function Chat() {
                                     }
                                   }}
                                 >Añadir al carrito</Button>
+                                <Link to={`/product/${suggested.id}`} className="flex-shrink-0">
+                                  <Button variant="outlineLight">Ver detalles</Button>
+                                </Link>
                               </div>
                             </div>
                           </div>
