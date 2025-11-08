@@ -11,7 +11,7 @@ import { fetchActiveProducts } from '../lib/products'
 export default function Chat() {
   const location = useLocation()
   const [messages, setMessages] = useState([
-    { id: 1, sender: 'Asistente', content: 'Hola 👋 ¿En qué puedo ayudarte a comprar hoy?' },
+    { id: `${Date.now()}-init`, sender: 'Asistente', content: 'Hola 👋 ¿En qué puedo ayudarte a comprar hoy?' },
   ])
   const [newMessage, setNewMessage] = useState('')
   const [toast, setToast] = useState({ message: '', type: 'info' })
@@ -19,9 +19,19 @@ export default function Chat() {
   const [qtyMap, setQtyMap] = useState({})
   const hasResetRef = useRef(false)
 
+  // Generador de IDs robusto con fallback
+  const generateId = () => {
+    try {
+      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID()
+      }
+    } catch (e) {}
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  }
+
   const resetConversation = () => {
     if (!window.confirm('¿Seguro que deseas reiniciar la conversación?')) return
-    setMessages([{ id: 1, sender: 'Asistente', content: 'Hola 👋 ¿En qué puedo ayudarte a comprar hoy?' }])
+    setMessages([{ id: generateId(), sender: 'Asistente', content: 'Hola 👋 ¿En qué puedo ayudarte a comprar hoy?' }])
     setNewMessage('')
     setQtyMap({})
     setToast({ message: 'Conversación reiniciada', type: 'success' })
@@ -38,7 +48,7 @@ export default function Chat() {
   // Reinicio de conversación al navegar con state { resetConversation: true }
   useEffect(() => {
     if (location?.state?.resetConversation && !hasResetRef.current) {
-      setMessages([{ id: 1, sender: 'Asistente', content: 'Hola 👋 ¿En qué puedo ayudarte a comprar hoy?' }])
+      setMessages([{ id: generateId(), sender: 'Asistente', content: 'Hola 👋 ¿En qué puedo ayudarte a comprar hoy?' }])
       setNewMessage('')
       setQtyMap({})
       setToast({ message: 'Conversación reiniciada', type: 'info' })
@@ -49,7 +59,7 @@ export default function Chat() {
   const normalize = (s) => (s||'')
     .toLowerCase()
     .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9\s]/g, ' ')
     .replace(/\s+/g, ' ') // colapsar espacios
     .trim()
@@ -78,19 +88,19 @@ export default function Chat() {
     const content = newMessage.trim()
     if (!content) return
 
-    const userMsg = { id: Date.now(), sender: 'Tú', content }
+    const userMsg = { id: generateId(), sender: 'Tú', content }
     setMessages((prev) => [...prev, userMsg])
     setNewMessage('')
 
     try {
       const { data } = await api.post('/assistant/chat', { message: content })
       if (data?.answer) {
-        setMessages((prev) => [...prev, { id: Date.now() + 1, sender: 'Asistente', content: data.answer }])
+        setMessages((prev) => [...prev, { id: generateId(), sender: 'Asistente', content: data.answer }])
       } else if (data?.error) {
-        setMessages((prev) => [...prev, { id: Date.now() + 2, sender: 'Asistente', content: `Error: ${data.error}` }])
+        setMessages((prev) => [...prev, { id: generateId(), sender: 'Asistente', content: `Error: ${data.error}` }])
       }
     } catch (err) {
-      setMessages((prev) => [...prev, { id: Date.now() + 3, sender: 'Asistente', content: 'Hubo un problema al contactar el asistente.' }])
+      setMessages((prev) => [...prev, { id: generateId(), sender: 'Asistente', content: 'Hubo un problema al contactar el asistente.' }])
     }
   }
 
@@ -101,18 +111,21 @@ export default function Chat() {
         <div className="bg-white border border-neutral-200 rounded-lg shadow-sm flex-grow flex flex-col">
           <div className="p-4 border-b border-neutral-200 flex items-center justify-between">
             <h1 className="text-xl font-semibold text-neutral-900">Chat</h1>
-            <Button variant="ghost" onClick={resetConversation}>Reiniciar</Button>
+            <Button variant="secondary" onClick={resetConversation}>Reiniciar</Button>
           </div>
-          <div className="flex-grow p-4 space-y-4 overflow-y-auto">
+          <div className="flex-grow p-4 space-y-4 overflow-y-auto" role="log" aria-live="polite" aria-relevant="additions">
             {messages.map((msg) => {
               const suggestedList = msg.sender !== 'Tú' ? findSuggestedProducts(msg.content) : []
+              const wrapperClass = msg.sender === 'Tú' 
+                ? 'flex justify-end'
+                : 'flex flex-col items-start gap-2';
               return (
-                <div key={msg.id} className={msg.sender === 'Tú' ? 'flex justify-end' : 'flex justify-start'}>
+                <div key={msg.id} className={wrapperClass}>
                   <div className={msg.sender === 'Tú' ? 'bg-neutral-200 text-neutral-900 rounded-lg p-3 max-w-md' : 'bg-primary-light text-primary-dark rounded-lg p-3 max-w-md'}>
                     <p><strong>{msg.sender}:</strong> {msg.content}</p>
                   </div>
                   {suggestedList.length > 0 && (
-                    <div className="mt-2 w-full max-w-lg">
+                    <div className="w-full max-w-lg">
                       <div className="space-y-2">
                         {suggestedList.map((suggested) => (
                           <div key={suggested.id} className="border border-neutral-300 rounded-lg bg-white text-neutral-900 shadow-sm overflow-hidden">
@@ -150,7 +163,7 @@ export default function Chat() {
                                     }}
                                   >Añadir al carrito</Button>
                                   <Link to={`/product/${suggested.id}`} state={{ from: 'chat' }} className="flex-shrink-0">
-                                    <Button variant="ghost">Ver detalles</Button>
+                                    <Button variant="secondary">Ver detalles</Button>
                                   </Link>
                                 </div>
                               </div>
