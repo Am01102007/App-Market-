@@ -20,10 +20,11 @@ export default function Chat() {
   const hasResetRef = useRef(false)
 
   const resetConversation = () => {
+    if (!window.confirm('¿Seguro que deseas reiniciar la conversación?')) return
     setMessages([{ id: 1, sender: 'Asistente', content: 'Hola 👋 ¿En qué puedo ayudarte a comprar hoy?' }])
     setNewMessage('')
     setQtyMap({})
-    setToast({ message: 'Conversación reiniciada', type: 'info' })
+    setToast({ message: 'Conversación reiniciada', type: 'success' })
   }
 
   useEffect(() => {

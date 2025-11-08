@@ -149,7 +149,15 @@ export default function ProductDetail() {
           <div className="mb-4">
             <div className="flex gap-2">
               <Button variant="outlineLight" onClick={() => navigate('/chat')}>Regresar al chat</Button>
-              <Button variant="outlineLight" onClick={() => navigate('/chat', { state: { resetConversation: true } })}>Reiniciar conversación</Button>
+              <Button
+                variant="outlineLight"
+                onClick={() => {
+                  if (!window.confirm('¿Seguro que deseas reiniciar la conversación?')) return
+                  navigate('/chat', { state: { resetConversation: true } })
+                }}
+              >
+                Reiniciar conversación
+              </Button>
             </div>
           </div>
         )}
