@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
+import QuantityStepper from '../components/ui/QuantityStepper'
 import RatingStars from '../components/ui/RatingStars'
 import Toast from '../components/ui/Toast'
 import Skeleton from '../components/ui/Skeleton'
@@ -12,6 +13,7 @@ import ConfirmModal from '../components/ui/ConfirmModal'
 import { useEffect, useState } from 'react'
 import { isWishlisted, toggleWishlist } from '../lib/wishlist'
 import RelatedCarousel from '../components/RelatedCarousel'
+import { getRating, submitRating } from '../lib/ratings'
 
 export default function ProductDetail() {
   const { id } = useParams()
@@ -27,6 +29,7 @@ export default function ProductDetail() {
   const [qty, setQty] = useState(1)
   const [wish, setWish] = useState(false)
   const [related, setRelated] = useState([])
+  const [localRating, setLocalRating] = useState({ avg: 0, count: 0 })
 
   useEffect(() => {
     let mounted = true
@@ -37,6 +40,7 @@ export default function ProductDetail() {
           setProduct(data)
           setError(null)
           setWish(isWishlisted(id))
+          setLocalRating(getRating(id))
         }
       })
       .catch((err) => {
@@ -171,7 +175,12 @@ export default function ProductDetail() {
                   <div className="flex-grow">
                     <p className="text-sm text-neutral-500 uppercase tracking-wider">{typeof product.category === 'object' && product.category?.name ? product.category.name : product.category || '—'}</p>
                     <h1 className="text-3xl font-bold mt-1">{product.name}</h1>
-                    <RatingStars rating={product.rating} count={product.reviewsCount} className="mt-1" />
+                    <RatingStars 
+                      rating={localRating.avg || product.rating} 
+                      count={localRating.count || product.reviewsCount} 
+                      className="mt-1" 
+                      onRate={(stars) => { const next = submitRating(id, stars); setLocalRating(next); setToast({ message: `¡Gracias! Calificaste con ${stars}★`, type: 'success' }) }}
+                    />
                     <p className="text-neutral-500 mt-1">Estado: {({ ACTIVE: 'Activo', INACTIVE: 'Inactivo', SOLD: 'Vendido' }[product.status]) || product.status || '—'}</p>
                     <div className="mt-4">
                       <p className="text-3xl font-semibold text-primary">${Number(product.price)?.toFixed ? Number(product.price).toFixed(2) : product.price}</p>
@@ -185,14 +194,12 @@ export default function ProductDetail() {
                   <div className="mt-6 border-t border-neutral-200 pt-6">
                     <div className="p-4 rounded-lg bg-neutral-50 border border-neutral-200">
                       <p className="text-success font-semibold">En stock</p>
-                      <div className="mt-3 flex items-center gap-3">
-                        <Input
-                          type="number"
+                      <div className="mt-3 flex flex-wrap items-center gap-3">
+                        <QuantityStepper
+                          value={qty}
                           min={1}
                           max={99}
-                          value={qty}
-                          onChange={(e) => { setQty(e.target.value); setLastQty(id, e.target.value) }}
-                          className="w-24"
+                          onChange={(v) => { setQty(v); setLastQty(id, v) }}
                         />
                         <Button onClick={() => { const q = Math.max(1, Number(qty) || 1); setLastQty(id, q); try { addToCart(product, q); setToast({ message: `Añadido al carrito: ${product.name} ×${q}`, type: 'success' }); } catch(e) { setToast({ message: 'No se pudo añadir al carrito', type: 'error' }); } }}>Añadir al carrito</Button>
                         <Button variant="secondary">Comprar ahora</Button>

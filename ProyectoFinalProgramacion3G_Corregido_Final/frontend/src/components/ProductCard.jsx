@@ -1,12 +1,14 @@
 import { Link } from 'react-router-dom';
 import Button from './ui/Button';
 import Input from './ui/Input';
+import QuantityStepper from './ui/QuantityStepper';
 import RatingStars from './ui/RatingStars';
 import Toast from './ui/Toast';
 import ConfirmModal from './ui/ConfirmModal';
 import { useEffect, useMemo, useState } from 'react';
 import { addToCart, getCart, removeFromCart, getLastQty, setLastQty } from '../lib/cart';
 import { isWishlisted, toggleWishlist } from '../lib/wishlist';
+import { getRating, submitRating } from '../lib/ratings';
 
 /**
  * Componente de tarjeta de producto para mostrar información básica de un producto.
@@ -31,6 +33,7 @@ export default function ProductCard({ product }) {
   const [toastType, setToastType] = useState('info');
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [wish, setWish] = useState(false);
+  const [localRating, setLocalRating] = useState({ avg: 0, count: 0 });
 
   const cartItems = useMemo(() => getCart(), []);
   const inCart = useMemo(() => cartItems.some(i => String(i.id) === String(id)), [cartItems, id]);
@@ -49,6 +52,7 @@ export default function ProductCard({ product }) {
 
   useEffect(() => {
     setWish(isWishlisted(id))
+    setLocalRating(getRating(id))
   }, [id])
 
   const onAdd = (e) => {
@@ -119,7 +123,12 @@ export default function ProductCard({ product }) {
         <Link to={`/product/${id}`} className="block">
           <h3 className="text-lg font-semibold text-neutral-900 truncate">{name}</h3>
         </Link>
-        <RatingStars rating={rating} count={reviewsCount} className="mt-1" />
+        <RatingStars 
+          rating={localRating.avg || rating} 
+          count={localRating.count || reviewsCount} 
+          className="mt-1"
+          onRate={(stars)=>{ const next = submitRating(id, stars); setLocalRating(next); setToastType('success'); setToastMsg(`Gracias por tu calificación: ${stars}★`); }} 
+        />
         <p className="text-sm text-neutral-600 capitalize">{categoryName}</p>
         {description && (
           <p className="text-sm text-neutral-700 mt-2 line-clamp-2">{description}</p>
@@ -131,14 +140,7 @@ export default function ProductCard({ product }) {
         <div className="mt-3 flex items-center gap-3">
           {!inCart ? (
             <>
-              <Input
-                type="number"
-                min={1}
-                max={99}
-                value={qty}
-                onChange={(e) => { setQty(e.target.value); setLastQty(id, e.target.value); }}
-                className="w-20"
-              />
+              <QuantityStepper value={qty} min={1} max={99} onChange={(v) => { setQty(v); setLastQty(id, v); }} />
               <Button variant="primary" onClick={onAdd}>Añadir</Button>
             </>
           ) : (
