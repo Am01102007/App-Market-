@@ -5,7 +5,7 @@ import QuantityStepper from '../components/ui/QuantityStepper'
 import RatingStars from '../components/ui/RatingStars'
 import Toast from '../components/ui/Toast'
 import Skeleton from '../components/ui/Skeleton'
-import { sampleProducts } from '../lib/sampleProducts'
+// Eliminamos datos de muestra; el detalle debe venir solo del backend
 import { addToCart, getLastQty, setLastQty } from '../lib/cart'
 import { fetchProductById, updateProduct, deleteProduct, fetchProductsByCategory, fetchProductAvailability, fetchProductRatingSummary, submitProductRating, fetchMyProductRating } from '../lib/products'
 import Header from '../components/Header'
@@ -58,9 +58,8 @@ export default function ProductDetail() {
       })
       .catch((err) => {
         console.error('Error cargando producto', err)
-        const fallback = sampleProducts.find(p => String(p.id) === String(id)) || sampleProducts[0]
-        setProduct(fallback)
-        setError(null)
+        setProduct(null)
+        setError('No se pudo cargar el producto. Intenta nuevamente.')
       })
       .finally(() => mounted && setLoading(false))
     return () => { mounted = false }
@@ -85,10 +84,10 @@ export default function ProductDetail() {
     fetchProductsByCategory(categoryName)
       .then((data) => {
         const rel = (data || []).filter(p => String(p.id) !== String(id)).slice(0, 12)
-        setRelated(rel.length ? rel : sampleProducts.filter(p => p.category === categoryName && String(p.id) !== String(id)))
+        setRelated(rel)
       })
       .catch(() => {
-        setRelated(sampleProducts.filter(p => p.category === categoryName && String(p.id) !== String(id)))
+        setRelated([])
       })
   }, [product, id])
 
@@ -263,15 +262,15 @@ export default function ProductDetail() {
                   <h2 className="text-xl font-semibold">Editando Producto</h2>
                   <div>
                     <label className="text-sm font-medium text-neutral-600">Nombre</label>
-                    <input value={form.name} onChange={(e)=>setForm({ ...form, name: e.target.value })} className="mt-1 w-full px-3 py-2 rounded-md bg-white border border-neutral-300 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                    <input placeholder="Ej. Laptop Gamer 15\"" value={form.name} onChange={(e)=>setForm({ ...form, name: e.target.value })} className="mt-1 w-full px-3 py-2 rounded-md bg-white border border-neutral-300 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary/50" />
                   </div>
                   <div>
                     <label className="text-sm font-medium text-neutral-600">Precio</label>
-                    <input type="number" value={form.price} onChange={(e)=>setForm({ ...form, price: e.target.value })} className="mt-1 w-full px-3 py-2 rounded-md bg-white border border-neutral-300 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                    <input placeholder="Ej. 1499.99" type="number" value={form.price} onChange={(e)=>setForm({ ...form, price: e.target.value })} className="mt-1 w-full px-3 py-2 rounded-md bg-white border border-neutral-300 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary/50" />
                   </div>
                   <div>
                     <label className="text-sm font-medium text-neutral-600">Imagen (URL)</label>
-                    <input value={form.imageUrl} onChange={(e)=>setForm({ ...form, imageUrl: e.target.value })} className="mt-1 w-full px-3 py-2 rounded-md bg-white border border-neutral-300 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                    <input placeholder="URL completa de la imagen (https://...)" value={form.imageUrl} onChange={(e)=>setForm({ ...form, imageUrl: e.target.value })} className="mt-1 w-full px-3 py-2 rounded-md bg-white border border-neutral-300 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary/50" />
                   </div>
                   <div>
                     <label className="text-sm font-medium text-neutral-600">Categoría</label>

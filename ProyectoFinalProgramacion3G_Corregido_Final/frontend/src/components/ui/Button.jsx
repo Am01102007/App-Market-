@@ -1,6 +1,7 @@
 /**
  * Componente de botón reutilizable.
- * Ofrece variantes visuales y accesibilidad.
+ * Variantes visuales coherentes y accesibles, con soporte para enlaces.
+ * Incluye una variante especial para fondos con gradiente (outlineLight).
  */
 import { Link } from 'react-router-dom';
 
@@ -12,10 +13,11 @@ const variants = {
   ghost: 'text-primary hover:bg-primary/10',
   success: 'bg-gradient-primary text-white',
   danger: 'bg-danger text-white',
+  outlineLight: 'text-white border border-white/70 bg-white/10 hover:bg-white/20',
 };
 
 export default function Button({ children, to, type = 'button', onClick, className = '', variant = 'primary', disabled = false }) {
-  const classNames = `${base} px-5 py-2.5 text-sm tracking-wider ${variants[variant]} ${className}`;
+  const classNames = `${base} px-5 py-2.5 text-sm tracking-wider ${variants[variant] || variants.primary} ${className}`;
 
   if (to) {
     return (

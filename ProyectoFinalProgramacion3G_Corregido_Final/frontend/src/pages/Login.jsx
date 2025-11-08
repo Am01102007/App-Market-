@@ -90,7 +90,7 @@ export default function Login(){
           type="email" 
           value={email} 
           onChange={e => setEmail(e.target.value)} 
-          placeholder="tu@correo.com" 
+          placeholder="Ingresa tu correo registrado" 
           required
         />
         <Input 
@@ -98,7 +98,7 @@ export default function Login(){
           type="password" 
           value={password} 
           onChange={e => setPassword(e.target.value)} 
-          placeholder="••••••••" 
+          placeholder="Ingresa tu contraseña" 
           required
         />
         <div className="flex items-center justify-between">

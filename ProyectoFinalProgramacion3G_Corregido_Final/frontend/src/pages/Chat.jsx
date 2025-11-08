@@ -122,7 +122,7 @@ export default function Chat() {
           </div>
           <div className="p-4 border-t border-neutral-200">
             <form className="flex items-center gap-3" onSubmit={handleSubmit}>
-              <Input name="message" placeholder="Escribe un mensaje..." className="flex-grow" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} />
+              <Input name="message" placeholder="Escribe tu consulta: producto, categoría o presupuesto" className="flex-grow" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} />
               <Button type="submit" variant="primary">Enviar</Button>
             </form>
           </div>

@@ -104,7 +104,7 @@ export default function ProductCard({ product }) {
   }
 
   return (
-    <div className="bg-white/90 backdrop-blur border border-neutral-200 rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group">
+    <div className="bg-white/90 backdrop-blur border border-neutral-200 rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group h-full flex flex-col">
       <Link to={`/product/${id}`} className="relative block w-full h-48 bg-neutral-200/50 overflow-hidden">
         {imageUrl ? (
           <img
@@ -137,7 +137,7 @@ export default function ProductCard({ product }) {
         </div>
       </Link>
 
-      <div className="p-4">
+      <div className="p-4 flex-1 flex flex-col">
         <Link to={`/product/${id}`} className="block">
           <h3 className="text-lg font-semibold text-neutral-900 truncate">{name}</h3>
         </Link>
@@ -160,17 +160,17 @@ export default function ProductCard({ product }) {
           ${displayPrice?.toFixed ? displayPrice.toFixed(2) : displayPrice}
         </p>
 
-        <div className="mt-3 flex items-center gap-3">
+        <div className="mt-3 flex flex-wrap items-center gap-3">
           {!inCart ? (
             <>
               <QuantityStepper value={qty} min={1} max={Math.max(1, availability?.availableQuantity || 1)} onChange={(v) => { setQty(v); setLastQty(id, v); }} />
-              <Button variant="primary" disabled={!availability?.available} onClick={onAdd}>Añadir</Button>
+              <Button variant="primary" disabled={!availability?.available} onClick={onAdd} className="flex-shrink-0">Añadir</Button>
             </>
           ) : (
-            <Button variant="danger" onClick={onRemove}>Quitar del carrito</Button>
+            <Button variant="danger" onClick={onRemove} className="flex-shrink-0">Quitar del carrito</Button>
           )}
-          <Button variant="ghost" to={`/product/${id}`}>Ver detalles</Button>
-          <Button variant="ghost" onClick={onToggleWish} className="ml-auto">
+          <Button variant="ghost" to={`/product/${id}`} className="flex-shrink-0">Ver detalles</Button>
+          <Button variant="ghost" onClick={onToggleWish} className="flex-shrink-0">
             {wish ? '❤️ Favorito' : '🤍 Guardar'}
           </Button>
         </div>

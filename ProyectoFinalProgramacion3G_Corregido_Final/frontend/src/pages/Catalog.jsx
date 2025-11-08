@@ -5,7 +5,7 @@ import Button from '../components/ui/Button'
 import ProductCard from '../components/ProductCard'
 import Skeleton from '../components/ui/Skeleton'
 import { fetchActiveProducts, searchProducts } from '../lib/products'
-import { sampleProducts } from '../lib/sampleProducts'
+// Eliminamos datos de muestra para usar solo productos de la base de datos
 import Header from '../components/Header'
 import Input from '../components/ui/Input'
 
@@ -90,9 +90,8 @@ export default function Catalog() {
       })
       .catch((err) => {
         console.error('Error cargando productos', err)
-        // Fallback a datos de muestra si el backend no está disponible
-        setProducts(sampleProducts)
-        setError(null)
+        setProducts([])
+        setError('No se pudieron cargar los productos. Intenta nuevamente.')
       })
       .finally(() => mounted && setLoading(false))
     return () => { mounted = false }
@@ -178,7 +177,7 @@ export default function Catalog() {
               name="q"
               value={query}
               onChange={onSearchChange}
-              placeholder="Buscar por nombre o categoría"
+              placeholder="Busca productos por nombre, categoría o palabra clave"
               className="w-72"
             />
           </div>

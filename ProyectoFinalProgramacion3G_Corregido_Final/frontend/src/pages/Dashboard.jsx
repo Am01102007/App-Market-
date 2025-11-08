@@ -6,7 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import ProductCard from '../components/ProductCard';
 import { fetchActiveProducts } from '../lib/products';
-import { sampleProducts } from '../lib/sampleProducts';
+// Quitamos datos de muestra; el dashboard usará solo productos activos del backend
 import Header from '../components/Header';
 import Input from '../components/ui/Input';
 
@@ -52,9 +52,9 @@ export default function Dashboard() {
       })
       .catch((err) => { 
         console.error('Error cargando destacados', err); 
-        setError('No se pudieron cargar los productos destacados. Mostrando datos de ejemplo.');
+        setError('No se pudieron cargar los productos destacados.');
         if (mounted) {
-          setAllProducts(sampleProducts);
+          setAllProducts([]);
         }
       });
     return () => { mounted = false };
@@ -104,17 +104,18 @@ export default function Dashboard() {
         
         <section>
           {/* Hero premium + búsqueda */}
-          <div className="rounded-xl p-8 mb-6 bg-gradient-primary text-white shadow-lg">
-            <h1 className="text-3xl font-bold mb-2">Encuentra lo que amas</h1>
-            <p className="text-white/90 mb-4">Ofertas, favoritos y envíos rápidos — sin salir de AppMarket.</p>
-            <form onSubmit={onSearch} className="flex items-center gap-3">
+          <div className="rounded-xl p-8 lg:p-10 mb-6 bg-gradient-primary text-white shadow-lg">
+            <h1 className="text-3xl lg:text-4xl font-bold mb-2">Encuentra lo que amas</h1>
+            <p className="text-white/90 mb-6">Ofertas, favoritos y envíos rápidos — sin salir de AppMarket.</p>
+            <form onSubmit={onSearch} className="flex flex-wrap items-center gap-3">
               <Input
+                id="hero-search"
                 name="q"
-                placeholder="Buscar productos premium"
-                className="flex-grow bg-white text-neutral-900"
+                placeholder="Busca por nombre, categoría o palabra clave"
+                className="flex-grow bg-white/95 text-neutral-900"
               />
               <Button type="submit" variant="secondary">Buscar</Button>
-              <Button variant="ghost" to="/catalog">Ver catálogo</Button>
+              <Button variant="outlineLight" to="/catalog">Ver catálogo</Button>
             </form>
           </div>
 

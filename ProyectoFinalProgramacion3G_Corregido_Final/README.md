@@ -72,7 +72,9 @@ Arranque de MySQL:
 
 - Layout unificado de autenticación (`AuthLayout`) aplicado a Login, Registro y Recuperación.
 - Componentes base:
-  - `Button` con variantes (`primary`, `secondary`, `ghost`) y accesibilidad.
+  - `Button` con variantes (`primary`, `secondary`, `ghost`, `danger`, `outlineLight`) y accesibilidad.
+  - `Input` genera placeholders descriptivos automáticamente a partir del `label` cuando no se provee.
+  - Placeholders recomendados: “Ingresa tu correo registrado”, “Busca por nombre, categoría o palabra clave”.
 
 ## Estilo de comentarios (Javadoc)
 

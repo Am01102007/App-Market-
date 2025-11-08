@@ -4,14 +4,19 @@
   mensaje de error. Recibe id para vincular label e input.
   Props: { id, label, type, placeholder, value, onChange, error, className }
 */
+/**
+ * Campo de texto accesible y consistente.
+ * Si no se especifica `placeholder`, se genera uno descriptivo a partir del `label`.
+ */
 export default function Input({ id, label, type = 'text', placeholder, value, onChange, error, className='', ...rest }) {
+  const autoPlaceholder = placeholder ?? (label ? `Ingresa ${label.toLowerCase()}` : undefined)
   return (
     <div className="space-y-2">
       {label && <label htmlFor={id} className="text-neutral-700 text-sm font-semibold">{label}</label>}
       <input
         id={id}
         type={type}
-        placeholder={placeholder}
+        placeholder={autoPlaceholder}
         value={value}
         onChange={onChange}
         aria-invalid={!!error}
