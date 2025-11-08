@@ -1,11 +1,15 @@
 FROM node:18-alpine AS frontend-build
-WORKDIR /app
-# Copy frontend and build static assets
-COPY frontend ./frontend
+# Preparar directorio del frontend
 WORKDIR /app/frontend
-# Build SPA with API base relative to same origin
+# Copiar solo manifestos para aprovechar caché de Docker
+COPY frontend/package.json frontend/package-lock.json ./
+# Instalar dependencias (con tolerancia a peers en npm 7+)
+RUN npm ci --no-audit --no-fund --legacy-peer-deps || npm install --no-audit --no-fund --legacy-peer-deps
+# Copiar el resto del código del frontend
+COPY frontend ./
+# Build SPA con base de API relativa al mismo origen
 ENV VITE_API_URL=/api
-RUN npm ci && npm run build
+RUN npm run build
 
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
