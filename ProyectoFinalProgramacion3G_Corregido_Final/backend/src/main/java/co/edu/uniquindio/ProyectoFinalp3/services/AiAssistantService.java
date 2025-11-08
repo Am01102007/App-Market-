@@ -15,6 +15,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,20 +33,36 @@ public class AiAssistantService {
     }
 
     public String chat(String userMessage) throws Exception {
-        // Construir contexto con catálogo activo/available
+        // Construir contexto con catálogo activo/available desde la base real (Neon)
         List<Product> catalog = productService.getActiveProducts(ProductStatus.ACTIVE);
+
+        // Si el catálogo está vacío, responder determinísticamente sin inventar datos
+        if (catalog == null || catalog.isEmpty()) {
+            return "No hay productos activos actualmente en el catálogo.";
+        }
+
         String catalogSummary = catalog.stream()
                 .limit(12)
                 .map(p -> String.format("- %s (%.2f) [%s]", p.getName(), p.getPrice(), p.getCategory() != null ? p.getCategory().getName() : "sin categoría"))
                 .collect(Collectors.joining("\n"));
 
+        // Respuesta segura para consultas de disponibilidad/listado: nunca inventar
+        String lower = userMessage == null ? "" : userMessage.toLowerCase(Locale.ROOT);
+        boolean asksForList = lower.contains("disponible") || lower.contains("disponibles")
+                || lower.contains("que tienes") || lower.contains("tienes")
+                || lower.contains("catálogo") || lower.contains("catalogo")
+                || lower.contains("lista") || lower.contains("productos");
+        if (asksForList) {
+            return "En AppMarket hay estos productos activos:\n" + catalogSummary +
+                    "\n¿Cuál te interesa? Puedes pedirme: 'añadir <nombre> al carrito'.";
+        }
+
         // Fallback local si no hay API key configurada
         if (groqApiKey == null || groqApiKey.isBlank()) {
-            String lower = userMessage.toLowerCase();
             // Heurística: si pide "añadir" o "agregar", intenta sugerir producto coincidente
             if (lower.contains("añadir") || lower.contains("agregar") || lower.contains("carrito")) {
                 Product match = catalog.stream()
-                        .filter(p -> lower.contains(p.getName().toLowerCase()))
+                        .filter(p -> lower.contains(p.getName().toLowerCase(Locale.ROOT)))
                         .findFirst()
                         .orElse(catalog.stream().findFirst().orElse(null));
                 if (match != null) {
@@ -60,12 +77,15 @@ public class AiAssistantService {
         String systemPrompt = "Eres un asistente de compras para AppMarket. " +
                 "Ayuda al usuario a: descubrir productos, comparar opciones, y decidir qué añadir al carrito. " +
                 "Responde breve, clara y con pasos accionables. Si el usuario pide añadir al carrito, sugiere nombre del producto y cantidad. " +
-                "Catálogo disponible (muestra parcial):\n" + catalogSummary;
+                "Regla crítica: NO inventes productos ni precios. SOLO menciona ítems presentes en el catálogo listado. " +
+                "Si un producto no aparece en ese catálogo, informa que no hay datos. " +
+                "Catálogo disponible (muestra parcial, fuente DB):\n" + catalogSummary;
 
         // Construir JSON para Groq Chat Completions (API compatible tipo OpenAI)
         ObjectNode root = objectMapper.createObjectNode();
         root.put("model", "llama-3.1-8b-instant");
-        root.put("temperature", 0.3);
+        // Temperatura baja para evitar respuestas creativas que inventen datos
+        root.put("temperature", 0.0);
         ArrayNode messages = root.putArray("messages");
         ObjectNode sys = messages.addObject();
         sys.put("role", "system");
