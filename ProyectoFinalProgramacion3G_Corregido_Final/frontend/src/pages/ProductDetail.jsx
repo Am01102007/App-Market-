@@ -147,7 +147,10 @@ export default function ProductDetail() {
       <main className="max-w-5xl mx-auto p-8">
         {fromChat && (
           <div className="mb-4">
-            <Button variant="outlineLight" onClick={() => navigate('/chat')}>Regresar al chat</Button>
+            <div className="flex gap-2">
+              <Button variant="outlineLight" onClick={() => navigate('/chat')}>Regresar al chat</Button>
+              <Button variant="outlineLight" onClick={() => navigate('/chat', { state: { resetConversation: true } })}>Reiniciar conversación</Button>
+            </div>
           </div>
         )}
         {loading && (

@@ -1,14 +1,15 @@
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Header from '../components/Header'
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import api from '../lib/api'
 import Toast from '../components/ui/Toast'
 import { addToCart } from '../lib/cart'
 import { fetchActiveProducts } from '../lib/products'
 
 export default function Chat() {
+  const location = useLocation()
   const [messages, setMessages] = useState([
     { id: 1, sender: 'Asistente', content: 'Hola 👋 ¿En qué puedo ayudarte a comprar hoy?' },
   ])
@@ -16,6 +17,7 @@ export default function Chat() {
   const [toast, setToast] = useState({ message: '', type: 'info' })
   const [catalog, setCatalog] = useState([])
   const [qtyMap, setQtyMap] = useState({})
+  const hasResetRef = useRef(false)
 
   useEffect(() => {
     let mounted = true
@@ -24,6 +26,17 @@ export default function Chat() {
       .catch(() => { /* silencioso: sin catálogo no mostramos acciones */ })
     return () => { mounted = false }
   }, [])
+
+  // Reinicio de conversación al navegar con state { resetConversation: true }
+  useEffect(() => {
+    if (location?.state?.resetConversation && !hasResetRef.current) {
+      setMessages([{ id: 1, sender: 'Asistente', content: 'Hola 👋 ¿En qué puedo ayudarte a comprar hoy?' }])
+      setNewMessage('')
+      setQtyMap({})
+      setToast({ message: 'Conversación reiniciada', type: 'info' })
+      hasResetRef.current = true
+    }
+  }, [location?.state])
 
   const normalize = (s) => (s||'')
     .toLowerCase()
