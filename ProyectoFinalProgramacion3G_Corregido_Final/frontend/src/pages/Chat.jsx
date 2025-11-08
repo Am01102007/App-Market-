@@ -91,27 +91,43 @@ export default function Chat() {
                     <p><strong>{msg.sender}:</strong> {msg.content}</p>
                     {suggested && (
                       <div className="mt-2">
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="number"
-                            min={1}
-                            max={99}
-                            className="w-20"
-                            value={qtyMap[suggested.id] ?? 1}
-                            onChange={(e) => setQtyMap((prev) => ({ ...prev, [suggested.id]: Math.max(1, Number(e.target.value) || 1) }))}
-                          />
-                          <Button 
-                            variant="success" 
-                            onClick={() => {
-                              try {
-                                const q = qtyMap[suggested.id] ?? 1
-                                addToCart(suggested, q)
-                                setToast({ message: `Añadido al carrito: ${suggested.name} ×${q}`, type: 'success' })
-                              } catch {
-                                setToast({ message: 'No se pudo añadir al carrito', type: 'error' })
-                              }
-                            }}
-                          >Añadir "{suggested.name}"</Button>
+                        <div className="border border-neutral-300 rounded-lg bg-white text-neutral-900 shadow-sm overflow-hidden">
+                          <div className="flex gap-3 p-3 items-center">
+                            {suggested?.imageUrl && (
+                              <img src={suggested.imageUrl} alt={suggested.name} className="w-20 h-20 object-cover rounded-md border border-neutral-200" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold truncate">{suggested.name}</p>
+                              {typeof suggested?.category === 'object' ? (
+                                <p className="text-xs text-neutral-600 truncate">{suggested.category?.name}</p>
+                              ) : (
+                                <p className="text-xs text-neutral-600 truncate">{suggested?.category}</p>
+                              )}
+                              <p className="text-lg font-bold text-primary mt-1">${(Number(suggested.price))?.toFixed ? Number(suggested.price).toFixed(2) : suggested.price}</p>
+                              <div className="mt-2 flex items-center gap-2">
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  max={99}
+                                  className="w-20"
+                                  value={qtyMap[suggested.id] ?? 1}
+                                  onChange={(e) => setQtyMap((prev) => ({ ...prev, [suggested.id]: Math.max(1, Number(e.target.value) || 1) }))}
+                                />
+                                <Button 
+                                  variant="primary" 
+                                  onClick={() => {
+                                    try {
+                                      const q = qtyMap[suggested.id] ?? 1
+                                      addToCart(suggested, q)
+                                      setToast({ message: `Añadido al carrito: ${suggested.name} ×${q}`, type: 'success' })
+                                    } catch {
+                                      setToast({ message: 'No se pudo añadir al carrito', type: 'error' })
+                                    }
+                                  }}
+                                >Añadir al carrito</Button>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )}
