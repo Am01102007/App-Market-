@@ -126,7 +126,7 @@ export default function Chat() {
                                     }
                                   }}
                                 >Añadir al carrito</Button>
-                                <Link to={`/product/${suggested.id}`} className="flex-shrink-0">
+                                <Link to={`/product/${suggested.id}`} state={{ from: 'chat' }} className="flex-shrink-0">
                                   <Button variant="outlineLight">Ver detalles</Button>
                                 </Link>
                               </div>

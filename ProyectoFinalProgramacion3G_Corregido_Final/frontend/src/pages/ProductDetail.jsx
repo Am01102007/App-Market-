@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import QuantityStepper from '../components/ui/QuantityStepper'
@@ -19,6 +19,8 @@ import { getRating as getLocalRating, submitRating as submitLocalRating } from '
 export default function ProductDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
+  const fromChat = location?.state?.from === 'chat'
   const [product, setProduct] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -143,6 +145,11 @@ export default function ProductDetail() {
       <Header showBack />
 
       <main className="max-w-5xl mx-auto p-8">
+        {fromChat && (
+          <div className="mb-4">
+            <Button variant="outlineLight" onClick={() => navigate('/chat')}>Regresar al chat</Button>
+          </div>
+        )}
         {loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-sm">
