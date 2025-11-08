@@ -9,6 +9,7 @@ import co.edu.uniquindio.ProyectoFinalp3.enums.RoleEnum;
 import co.edu.uniquindio.ProyectoFinalp3.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +18,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-@Component
+//@Component
 public class DataLoader implements CommandLineRunner {
 
     @Autowired
@@ -52,48 +53,57 @@ public class DataLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        // Cargar datos si falta información básica: usuarios o productos
+        // Cargar datos solo si NO hay usuarios y NO hay productos (idempotente)
         long userCount = userRepository.count();
         long productCount = productRepository.count();
-        if (userCount == 0 || productCount == 0) {
+        if (userCount == 0 && productCount == 0) {
             loadInitialData();
         }
     }
 
     private void loadInitialData() {
-        // Crear usuarios
-        User user1 = new User();
-        user1.setFirstName("Juan");
-        user1.setLastName("Pérez");
-        user1.setEmail("juan@example.com");
-        user1.setUsername("juan");
-        user1.setPassword(passwordEncoder.encode("password123"));
-        user1.setCedula("12345678");
-        user1.setAddress("Calle 123 #45-67");
-        user1.setRole(RoleEnum.USER);
-        user1 = userRepository.save(user1);
+        // Crear usuarios de forma idempotente (evitar duplicados por email)
+        User user1 = userRepository.findByEmail("juan@example.com");
+        if (user1 == null) {
+            user1 = new User();
+            user1.setFirstName("Juan");
+            user1.setLastName("Pérez");
+            user1.setEmail("juan@example.com");
+            user1.setUsername("juan");
+            user1.setPassword(passwordEncoder.encode("password123"));
+            user1.setCedula("12345678");
+            user1.setAddress("Calle 123 #45-67");
+            user1.setRole(RoleEnum.USER);
+            user1 = userRepository.save(user1);
+        }
 
-        User user2 = new User();
-        user2.setFirstName("María");
-        user2.setLastName("García");
-        user2.setEmail("maria@example.com");
-        user2.setUsername("maria");
-        user2.setPassword(passwordEncoder.encode("password123"));
-        user2.setCedula("87654321");
-        user2.setAddress("Carrera 89 #12-34");
-        user2.setRole(RoleEnum.USER);
-        user2 = userRepository.save(user2);
+        User user2 = userRepository.findByEmail("maria@example.com");
+        if (user2 == null) {
+            user2 = new User();
+            user2.setFirstName("María");
+            user2.setLastName("García");
+            user2.setEmail("maria@example.com");
+            user2.setUsername("maria");
+            user2.setPassword(passwordEncoder.encode("password123"));
+            user2.setCedula("87654321");
+            user2.setAddress("Carrera 89 #12-34");
+            user2.setRole(RoleEnum.USER);
+            user2 = userRepository.save(user2);
+        }
 
-        User admin = new User();
-        admin.setFirstName("Admin");
-        admin.setLastName("Sistema");
-        admin.setEmail("admin@example.com");
-        admin.setUsername("admin");
-        admin.setPassword(passwordEncoder.encode("admin123"));
-        admin.setCedula("11111111");
-        admin.setAddress("Oficina Central");
-        admin.setRole(RoleEnum.ADMIN);
-        admin = userRepository.save(admin);
+        User admin = userRepository.findByEmail("admin@example.com");
+        if (admin == null) {
+            admin = new User();
+            admin.setFirstName("Admin");
+            admin.setLastName("Sistema");
+            admin.setEmail("admin@example.com");
+            admin.setUsername("admin");
+            admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setCedula("11111111");
+            admin.setAddress("Oficina Central");
+            admin.setRole(RoleEnum.ADMIN);
+            admin = userRepository.save(admin);
+        }
 
         // Crear categorías
         Category electronics = new Category();
