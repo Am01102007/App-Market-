@@ -19,6 +19,13 @@ export default function Chat() {
   const [qtyMap, setQtyMap] = useState({})
   const hasResetRef = useRef(false)
 
+  const resetConversation = () => {
+    setMessages([{ id: 1, sender: 'Asistente', content: 'Hola 👋 ¿En qué puedo ayudarte a comprar hoy?' }])
+    setNewMessage('')
+    setQtyMap({})
+    setToast({ message: 'Conversación reiniciada', type: 'info' })
+  }
+
   useEffect(() => {
     let mounted = true
     fetchActiveProducts()
@@ -93,8 +100,9 @@ export default function Chat() {
       <Header />
       <main className="flex-grow max-w-4xl w-full mx-auto p-4 flex flex-col">
         <div className="bg-white border border-neutral-200 rounded-lg shadow-sm flex-grow flex flex-col">
-          <div className="p-4 border-b border-neutral-200">
+          <div className="p-4 border-b border-neutral-200 flex items-center justify-between">
             <h1 className="text-xl font-semibold text-neutral-900">Chat</h1>
+            <Button variant="outlineLight" onClick={resetConversation}>Reiniciar</Button>
           </div>
           <div className="flex-grow p-4 space-y-4 overflow-y-auto">
             {messages.map((msg) => {
