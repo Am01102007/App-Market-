@@ -1,4 +1,4 @@
-FROM node:18-alpine AS frontend-build
+FROM node:22-alpine AS frontend-build
 # Preparar directorio del frontend
 WORKDIR /app/frontend
 # Copiar solo manifestos para aprovechar caché de Docker
@@ -40,4 +40,3 @@ COPY --from=build /app/backend/target/*.jar app.jar
 EXPOSE 8080
 ENV SPRING_PROFILES_ACTIVE=postgres
 CMD ["java", "-jar", "app.jar"]
-
