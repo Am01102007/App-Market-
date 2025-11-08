@@ -8,7 +8,9 @@ import ConfirmModal from './ui/ConfirmModal';
 import { useEffect, useMemo, useState } from 'react';
 import { addToCart, getCart, removeFromCart, getLastQty, setLastQty } from '../lib/cart';
 import { isWishlisted, toggleWishlist } from '../lib/wishlist';
-import { getRating, submitRating } from '../lib/ratings';
+import { getRating as getLocalRating, submitRating as submitLocalRating } from '../lib/ratings';
+import { fetchProductAvailability, fetchProductRatingSummary, submitProductRating } from '../lib/products';
+import { getUsername } from '../lib/auth';
 
 /**
  * Componente de tarjeta de producto para mostrar información básica de un producto.
@@ -33,7 +35,8 @@ export default function ProductCard({ product }) {
   const [toastType, setToastType] = useState('info');
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [wish, setWish] = useState(false);
-  const [localRating, setLocalRating] = useState({ avg: 0, count: 0 });
+  const [ratingSummary, setRatingSummary] = useState({ average: 0, count: 0 });
+  const [availability, setAvailability] = useState({ availableQuantity: 0, available: status !== 'INACTIVE', status: status || 'ACTIVE' });
 
   const cartItems = useMemo(() => getCart(), []);
   const inCart = useMemo(() => cartItems.some(i => String(i.id) === String(id)), [cartItems, id]);
@@ -52,12 +55,27 @@ export default function ProductCard({ product }) {
 
   useEffect(() => {
     setWish(isWishlisted(id))
-    setLocalRating(getRating(id))
+    fetchProductRatingSummary(id)
+      .then((summary) => setRatingSummary(summary))
+      .catch(() => { const lr = getLocalRating(id); setRatingSummary({ average: lr.avg || 0, count: lr.count || 0 }) })
+    fetchProductAvailability(id)
+      .then((data) => setAvailability(data))
+      .catch(() => { /* fallback simple */ setAvailability({ availableQuantity: 0, available: status !== 'INACTIVE', status }) })
   }, [id])
+
+  // Ajustar cantidad al límite de stock cuando cambia disponibilidad
+  useEffect(() => {
+    const maxQty = Math.max(1, availability?.availableQuantity || 1)
+    setQty((prev) => Math.min(Math.max(1, Number(prev) || 1), maxQty))
+  }, [availability])
 
   const onAdd = (e) => {
     e.preventDefault();
-    const q = Math.max(1, Number(qty) || 1);
+    const raw = Math.max(1, Number(qty) || 1);
+    const limit = availability?.availableQuantity || 0;
+    if (limit <= 0) { setToastType('error'); setToastMsg('Sin unidades disponibles'); return; }
+    const q = Math.min(raw, limit);
+    if (q < raw) { setToastType('info'); setToastMsg('Cantidad ajustada al stock disponible'); }
     setLastQty(id, q);
     addToCart(product, q);
     setToastType('success');
@@ -124,10 +142,15 @@ export default function ProductCard({ product }) {
           <h3 className="text-lg font-semibold text-neutral-900 truncate">{name}</h3>
         </Link>
         <RatingStars 
-          rating={localRating.avg || rating} 
-          count={localRating.count || reviewsCount} 
+          rating={ratingSummary.average || rating} 
+          count={ratingSummary.count || reviewsCount} 
           className="mt-1"
-          onRate={(stars)=>{ const next = submitRating(id, stars); setLocalRating(next); setToastType('success'); setToastMsg(`Gracias por tu calificación: ${stars}★`); }} 
+          onRate={(stars)=>{
+            const username = getUsername()
+            submitProductRating(id, stars, username)
+              .then((summary) => { setRatingSummary(summary); setToastType('success'); setToastMsg(`Gracias por tu calificación: ${stars}★`) })
+              .catch(() => { const next = submitLocalRating(id, stars); setRatingSummary({ average: next.avg, count: next.count }); setToastType('info'); setToastMsg(`Calificación guardada localmente: ${stars}★`) })
+          }} 
         />
         <p className="text-sm text-neutral-600 capitalize">{categoryName}</p>
         {description && (
@@ -140,8 +163,8 @@ export default function ProductCard({ product }) {
         <div className="mt-3 flex items-center gap-3">
           {!inCart ? (
             <>
-              <QuantityStepper value={qty} min={1} max={99} onChange={(v) => { setQty(v); setLastQty(id, v); }} />
-              <Button variant="primary" onClick={onAdd}>Añadir</Button>
+              <QuantityStepper value={qty} min={1} max={Math.max(1, availability?.availableQuantity || 1)} onChange={(v) => { setQty(v); setLastQty(id, v); }} />
+              <Button variant="primary" disabled={!availability?.available} onClick={onAdd}>Añadir</Button>
             </>
           ) : (
             <Button variant="danger" onClick={onRemove}>Quitar del carrito</Button>

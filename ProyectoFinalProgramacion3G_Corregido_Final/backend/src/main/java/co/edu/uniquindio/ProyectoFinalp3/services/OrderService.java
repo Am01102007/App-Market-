@@ -51,12 +51,23 @@ public class OrderService {
             Product product = productRepository.findById(itemRequest.getProductId())
                     .orElseThrow(() -> new IllegalArgumentException("Product not found: " + itemRequest.getProductId()));
 
+            // Validar stock disponible
+            Integer currentQty = product.getAvailableQuantity() == null ? 0 : product.getAvailableQuantity();
+            int requested = Math.max(1, itemRequest.getQuantity());
+            if (currentQty < requested) {
+                throw new IllegalArgumentException("Insufficient stock for product: " + product.getName());
+            }
+
             BigDecimal itemTotal = product.getPrice().multiply(BigDecimal.valueOf(itemRequest.getQuantity()));
             totalAmount = totalAmount.add(itemTotal);
 
             OrderItem orderItem = new OrderItem(itemRequest.getQuantity(), product);
             orderItem.setOrder(order); // Asocia el OrderItem con el Order
             order.getOrderItems().add(orderItem); // Añade el OrderItem a la lista
+
+            // Decrementar stock
+            product.setAvailableQuantity(currentQty - requested);
+            productRepository.save(product);
         }
 
         order.setTotalAmount(totalAmount);

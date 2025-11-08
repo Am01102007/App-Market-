@@ -7,13 +7,14 @@ import Toast from '../components/ui/Toast'
 import Skeleton from '../components/ui/Skeleton'
 import { sampleProducts } from '../lib/sampleProducts'
 import { addToCart, getLastQty, setLastQty } from '../lib/cart'
-import { fetchProductById, updateProduct, deleteProduct, fetchProductsByCategory } from '../lib/products'
+import { fetchProductById, updateProduct, deleteProduct, fetchProductsByCategory, fetchProductAvailability, fetchProductRatingSummary, submitProductRating, fetchMyProductRating } from '../lib/products'
 import Header from '../components/Header'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import { useEffect, useState } from 'react'
 import { isWishlisted, toggleWishlist } from '../lib/wishlist'
 import RelatedCarousel from '../components/RelatedCarousel'
-import { getRating, submitRating } from '../lib/ratings'
+import { getUsername } from '../lib/auth'
+import { getRating as getLocalRating, submitRating as submitLocalRating } from '../lib/ratings'
 
 export default function ProductDetail() {
   const { id } = useParams()
@@ -29,7 +30,8 @@ export default function ProductDetail() {
   const [qty, setQty] = useState(1)
   const [wish, setWish] = useState(false)
   const [related, setRelated] = useState([])
-  const [localRating, setLocalRating] = useState({ avg: 0, count: 0 })
+  const [ratingSummary, setRatingSummary] = useState({ average: 0, count: 0 })
+  const [availability, setAvailability] = useState({ availableQuantity: 0, available: false, status: 'INACTIVE' })
 
   useEffect(() => {
     let mounted = true
@@ -40,7 +42,18 @@ export default function ProductDetail() {
           setProduct(data)
           setError(null)
           setWish(isWishlisted(id))
-          setLocalRating(getRating(id))
+          // Calificaciones: intentar backend, fallback local
+          fetchProductRatingSummary(id)
+            .then((summary) => setRatingSummary(summary))
+            .catch(() => {
+              const lr = getLocalRating(id)
+              setRatingSummary({ average: lr.avg || 0, count: lr.count || 0 })
+            })
+
+          // Disponibilidad: unidades y bandera disponible
+          fetchProductAvailability(id)
+            .then((data) => setAvailability(data))
+            .catch(() => setAvailability({ availableQuantity: Number(data?.availableQuantity) || 0, available: (data?.availableQuantity || 0) > 0, status: data?.status || (data?.availableQuantity > 0 ? 'AVAILABLE' : 'INACTIVE') }))
         }
       })
       .catch((err) => {
@@ -59,6 +72,12 @@ export default function ProductDetail() {
       setQty(initial)
     } catch {}
   }, [id])
+
+  // Ajustar cantidad al límite de stock cuando cambia disponibilidad
+  useEffect(() => {
+    const maxQty = Math.max(1, availability?.availableQuantity || 1)
+    setQty((prev) => Math.min(Math.max(1, Number(prev) || 1), maxQty))
+  }, [availability])
 
   useEffect(() => {
     if (!product) return
@@ -176,10 +195,19 @@ export default function ProductDetail() {
                     <p className="text-sm text-neutral-500 uppercase tracking-wider">{typeof product.category === 'object' && product.category?.name ? product.category.name : product.category || '—'}</p>
                     <h1 className="text-3xl font-bold mt-1">{product.name}</h1>
                     <RatingStars 
-                      rating={localRating.avg || product.rating} 
-                      count={localRating.count || product.reviewsCount} 
+                      rating={ratingSummary.average || product.rating} 
+                      count={ratingSummary.count || product.reviewsCount} 
                       className="mt-1" 
-                      onRate={(stars) => { const next = submitRating(id, stars); setLocalRating(next); setToast({ message: `¡Gracias! Calificaste con ${stars}★`, type: 'success' }) }}
+                      onRate={(stars) => {
+                        const username = getUsername()
+                        submitProductRating(id, stars, username)
+                          .then((summary) => { setRatingSummary(summary); setToast({ message: `¡Gracias! Calificaste con ${stars}★`, type: 'success' }) })
+                          .catch(() => {
+                            const next = submitLocalRating(id, stars)
+                            setRatingSummary({ average: next.avg, count: next.count })
+                            setToast({ message: `Guardado localmente: ${stars}★`, type: 'info' })
+                          })
+                      }}
                     />
                     <p className="text-neutral-500 mt-1">Estado: {({ ACTIVE: 'Activo', INACTIVE: 'Inactivo', SOLD: 'Vendido' }[product.status]) || product.status || '—'}</p>
                     <div className="mt-4">
@@ -193,15 +221,28 @@ export default function ProductDetail() {
 
                   <div className="mt-6 border-t border-neutral-200 pt-6">
                     <div className="p-4 rounded-lg bg-neutral-50 border border-neutral-200">
-                      <p className="text-success font-semibold">En stock</p>
+                      <p className={availability?.available ? 'text-success font-semibold' : 'text-danger font-semibold'}>
+                        {availability?.available ? 'En stock' : 'Agotado'}
+                      </p>
+                      {availability?.available && (
+                        <p className="text-xs text-neutral-600">Unidades disponibles: {availability.availableQuantity}</p>
+                      )}
                       <div className="mt-3 flex flex-wrap items-center gap-3">
                         <QuantityStepper
                           value={qty}
                           min={1}
-                          max={99}
+                          max={Math.max(1, availability?.availableQuantity || 1)}
                           onChange={(v) => { setQty(v); setLastQty(id, v) }}
                         />
-                        <Button onClick={() => { const q = Math.max(1, Number(qty) || 1); setLastQty(id, q); try { addToCart(product, q); setToast({ message: `Añadido al carrito: ${product.name} ×${q}`, type: 'success' }); } catch(e) { setToast({ message: 'No se pudo añadir al carrito', type: 'error' }); } }}>Añadir al carrito</Button>
+                        <Button disabled={!availability?.available} onClick={() => {
+                          const raw = Math.max(1, Number(qty) || 1)
+                          const limit = availability?.availableQuantity || 0
+                          if (limit <= 0) { setToast({ message: 'Sin unidades disponibles', type: 'error' }); return }
+                          const q = Math.min(raw, limit)
+                          if (q < raw) { setToast({ message: 'Cantidad ajustada al stock disponible', type: 'info' }) }
+                          setLastQty(id, q)
+                          try { addToCart(product, q); setToast({ message: `Añadido al carrito: ${product.name} ×${q}`, type: 'success' }); } catch(e) { setToast({ message: 'No se pudo añadir al carrito', type: 'error' }); }
+                        }}>Añadir al carrito</Button>
                         <Button variant="secondary">Comprar ahora</Button>
                         <Button variant="ghost" onClick={() => { toggleWishlist(product); const next = !wish; setWish(next); setToast({ message: next ? 'Añadido a favoritos' : 'Quitado de favoritos', type: 'success' }) }}>
                           {wish ? '❤️ Favorito' : '🤍 Guardar'}

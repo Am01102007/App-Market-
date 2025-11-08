@@ -15,6 +15,30 @@ export async function fetchProductById(id) {
   return data
 }
 
+export async function fetchProductAvailability(id) {
+  const { data } = await api.get(`/products/${id}/availability`)
+  return data // { availableQuantity, available, status }
+}
+
+export async function fetchProductRatingSummary(id) {
+  const { data } = await api.get(`/products/${id}/ratings/summary`)
+  return data // { average, count }
+}
+
+export async function submitProductRating(id, stars, username) {
+  const { data } = await api.post(`/products/${id}/ratings`, null, {
+    params: { stars, username }
+  })
+  return data // summary after submit
+}
+
+export async function fetchMyProductRating(id, username) {
+  const { data } = await api.get(`/products/${id}/ratings/mine`, {
+    params: { username }
+  })
+  return data // { stars }
+}
+
 export async function fetchProductsByCategory(category) {
   const { data } = await api.get(`/products/category/${category}`)
   return data

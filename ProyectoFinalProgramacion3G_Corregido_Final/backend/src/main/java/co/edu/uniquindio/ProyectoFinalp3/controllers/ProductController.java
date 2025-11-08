@@ -17,6 +17,7 @@ import co.edu.uniquindio.ProyectoFinalp3.models.ProductComment;
 import co.edu.uniquindio.ProyectoFinalp3.services.ProductCommentService;
 import co.edu.uniquindio.ProyectoFinalp3.services.ProductLikeService;
 import co.edu.uniquindio.ProyectoFinalp3.services.ProductService;
+import co.edu.uniquindio.ProyectoFinalp3.services.ProductRatingService;
 import co.edu.uniquindio.ProyectoFinalp3.services.ImageStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -82,6 +83,10 @@ public class ProductController {
     /** Codificador de contraseñas para usuarios demo */
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    /** Servicio de calificaciones */
+    @Autowired
+    private ProductRatingService productRatingService;
 
     /**
      * Crea un nuevo producto en el sistema.
@@ -195,6 +200,65 @@ public class ProductController {
         Optional<Product> product = productService.getProductById(id);
         return product.isPresent() ? ResponseEntity.ok(product.get()) 
                                    : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Producto no encontrado");
+    }
+
+    /**
+     * Resumen de calificaciones del producto (promedio y conteo)
+     */
+    @GetMapping("/{productId}/ratings/summary")
+    public ResponseEntity<Map<String, Object>> getRatingSummary(@PathVariable UUID productId) {
+        return ResponseEntity.ok(productRatingService.getSummary(productId));
+    }
+
+    /**
+     * Enviar calificación al producto (1..5 estrellas). Acepta username o userId.
+     */
+    @PostMapping("/{productId}/ratings")
+    public ResponseEntity<?> submitRating(
+            @PathVariable UUID productId,
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) UUID userId,
+            @RequestParam int stars) {
+        try {
+            Map<String, Object> summary;
+            if (username != null && !username.isBlank()) {
+                summary = productRatingService.submitByUsername(productId, username, stars);
+            } else {
+                summary = productRatingService.submit(productId, userId, stars);
+            }
+            return ResponseEntity.ok(summary);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    /**
+     * Obtiene la calificación del usuario autenticado para el producto.
+     */
+    @GetMapping("/{productId}/ratings/mine")
+    public ResponseEntity<Map<String, Object>> getMyRating(
+            @PathVariable UUID productId,
+            @RequestParam String username) {
+        return ResponseEntity.ok(productRatingService.getMyRating(productId, username));
+    }
+
+    /**
+     * Disponibilidad dinámica: devuelve unidades disponibles y bandera disponible.
+     */
+    @GetMapping("/{productId}/availability")
+    public ResponseEntity<Map<String, Object>> getAvailability(@PathVariable UUID productId) {
+        Optional<Product> productOpt = productService.getProductById(productId);
+        if (productOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        Product p = productOpt.get();
+        Integer qty = p.getAvailableQuantity() == null ? 0 : p.getAvailableQuantity();
+        boolean available = qty > 0 && p.getStatus() != ProductStatus.INACTIVE;
+        Map<String, Object> res = new java.util.HashMap<>();
+        res.put("availableQuantity", qty);
+        res.put("available", available);
+        res.put("status", p.getStatus());
+        return ResponseEntity.ok(res);
     }
 
     @PutMapping("/{id}")
