@@ -18,7 +18,8 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-//@Component
+@Component
+@Profile("dev")
 public class DataLoader implements CommandLineRunner {
 
     @Autowired
