@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom';
 import Button from './ui/Button';
 import Input from './ui/Input';
+import RatingStars from './ui/RatingStars';
 import Toast from './ui/Toast';
 import ConfirmModal from './ui/ConfirmModal';
 import { useEffect, useMemo, useState } from 'react';
 import { addToCart, getCart, removeFromCart, getLastQty, setLastQty } from '../lib/cart';
+import { isWishlisted, toggleWishlist } from '../lib/wishlist';
 
 /**
  * Componente de tarjeta de producto para mostrar información básica de un producto.
@@ -22,12 +24,13 @@ import { addToCart, getCart, removeFromCart, getLastQty, setLastQty } from '../l
  * @returns {JSX.Element} Tarjeta de producto clickeable
  */
 export default function ProductCard({ product }) {
-  const { id, name, imageUrl, category, price, status, description } = product;
+  const { id, name, imageUrl, category, price, status, description, rating, reviewsCount } = product;
 
   const [qty, setQty] = useState(1);
   const [toastMsg, setToastMsg] = useState('');
   const [toastType, setToastType] = useState('info');
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const [wish, setWish] = useState(false);
 
   const cartItems = useMemo(() => getCart(), []);
   const inCart = useMemo(() => cartItems.some(i => String(i.id) === String(id)), [cartItems, id]);
@@ -35,12 +38,17 @@ export default function ProductCard({ product }) {
   const displayPrice = typeof price === 'number' ? price : Number(price);
   const categoryName = typeof category === 'object' && category?.name ? category.name : category;
   const statusLabel = ({ ACTIVE: 'Activo', AVAILABLE: 'Disponible', INACTIVE: 'Inactivo', SOLD: 'Vendido' }[status]) || null;
+  const qualifiesFreeShipping = Number(displayPrice) >= 50; // umbral simple al estilo Amazon
 
   useEffect(() => {
     try {
       const initial = getLastQty(id)
       setQty(initial)
     } catch {}
+  }, [id])
+
+  useEffect(() => {
+    setWish(isWishlisted(id))
   }, [id])
 
   const onAdd = (e) => {
@@ -64,6 +72,15 @@ export default function ProductCard({ product }) {
     setToastMsg(`Eliminado del carrito: ${name}`);
   };
 
+  const onToggleWish = (e) => {
+    e.preventDefault();
+    toggleWishlist(product);
+    const next = !wish;
+    setWish(next);
+    setToastType('success');
+    setToastMsg(next ? 'Añadido a favoritos' : 'Quitado de favoritos');
+  }
+
   return (
     <div className="bg-white/90 backdrop-blur border border-neutral-200 rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden group">
       <Link to={`/product/${id}`} className="relative block w-full h-48 bg-neutral-200/50 overflow-hidden">
@@ -84,22 +101,30 @@ export default function ProductCard({ product }) {
         >
           Sin imagen
         </div>
-        {statusLabel && (
-          <span className="absolute top-2 right-2 text-xs px-2 py-1 rounded-full bg-white/90 border border-neutral-200 text-neutral-700 shadow-soft">
-            {statusLabel}
-          </span>
-        )}
+        <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
+          {statusLabel && (
+            <span className="text-xs px-2 py-1 rounded-full bg-white/90 border border-neutral-200 text-neutral-700 shadow-soft">
+              {statusLabel}
+            </span>
+          )}
+          {qualifiesFreeShipping && (
+            <span className="text-[11px] px-2 py-1 rounded-full bg-neon/20 border border-neon/40 text-neon font-semibold shadow-soft">
+              Envío gratis
+            </span>
+          )}
+        </div>
       </Link>
 
       <div className="p-4">
         <Link to={`/product/${id}`} className="block">
           <h3 className="text-lg font-semibold text-neutral-900 truncate">{name}</h3>
         </Link>
+        <RatingStars rating={rating} count={reviewsCount} className="mt-1" />
         <p className="text-sm text-neutral-600 capitalize">{categoryName}</p>
         {description && (
           <p className="text-sm text-neutral-700 mt-2 line-clamp-2">{description}</p>
         )}
-        <p className="text-xl font-bold text-primary mt-2">
+        <p className="text-2xl font-bold text-primary mt-2">
           ${displayPrice?.toFixed ? displayPrice.toFixed(2) : displayPrice}
         </p>
 
@@ -120,8 +145,11 @@ export default function ProductCard({ product }) {
             <Button variant="danger" onClick={onRemove}>Quitar del carrito</Button>
           )}
           <Button variant="ghost" to={`/product/${id}`}>Ver detalles</Button>
+          <Button variant="ghost" onClick={onToggleWish} className="ml-auto">
+            {wish ? '❤️ Favorito' : '🤍 Guardar'}
+          </Button>
         </div>
-      </div>
+     </div>
 
       <Toast message={toastMsg} type={toastType} onClose={() => setToastMsg('')} />
       <ConfirmModal

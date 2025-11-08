@@ -16,6 +16,7 @@ import Publish from './pages/Publish.jsx'
 import ProductDetail from './pages/ProductDetail.jsx'
 import RequireAuth from './components/RequireAuth.jsx'
 import Cart from './pages/Cart.jsx'
+import Wishlist from './pages/Wishlist.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -31,6 +32,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/chat" element={<RequireAuth><Chat /></RequireAuth>} />
         <Route path="/publish" element={<RequireAuth><Publish /></RequireAuth>} />
         <Route path="/cart" element={<RequireAuth><Cart /></RequireAuth>} />
+        <Route path="/wishlist" element={<RequireAuth><Wishlist /></RequireAuth>} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

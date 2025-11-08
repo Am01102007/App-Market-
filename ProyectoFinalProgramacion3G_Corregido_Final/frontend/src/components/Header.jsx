@@ -10,6 +10,7 @@ import { clearToken, clearUsername } from '../lib/auth';
 const navLinks = [
   { to: '/dashboard', text: 'Inicio' },
   { to: '/catalog', text: 'Catálogo' },
+  { to: '/wishlist', text: 'Favoritos' },
   { to: '/publish', text: 'Publicar' },
   { to: '/chat', text: 'Chat' },
 ];

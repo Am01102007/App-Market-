@@ -1,13 +1,17 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import Button from '../components/ui/Button'
+import Input from '../components/ui/Input'
+import RatingStars from '../components/ui/RatingStars'
 import Toast from '../components/ui/Toast'
 import Skeleton from '../components/ui/Skeleton'
 import { sampleProducts } from '../lib/sampleProducts'
-import { addToCart } from '../lib/cart'
-import { fetchProductById, updateProduct, deleteProduct } from '../lib/products'
+import { addToCart, getLastQty, setLastQty } from '../lib/cart'
+import { fetchProductById, updateProduct, deleteProduct, fetchProductsByCategory } from '../lib/products'
 import Header from '../components/Header'
 import ConfirmModal from '../components/ui/ConfirmModal'
 import { useEffect, useState } from 'react'
+import { isWishlisted, toggleWishlist } from '../lib/wishlist'
+import RelatedCarousel from '../components/RelatedCarousel'
 
 export default function ProductDetail() {
   const { id } = useParams()
@@ -20,6 +24,9 @@ export default function ProductDetail() {
   const [toast, setToast] = useState({ message: '', type: 'info' })
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [qty, setQty] = useState(1)
+  const [wish, setWish] = useState(false)
+  const [related, setRelated] = useState([])
 
   useEffect(() => {
     let mounted = true
@@ -29,6 +36,7 @@ export default function ProductDetail() {
         if (mounted) {
           setProduct(data)
           setError(null)
+          setWish(isWishlisted(id))
         }
       })
       .catch((err) => {
@@ -40,6 +48,26 @@ export default function ProductDetail() {
       .finally(() => mounted && setLoading(false))
     return () => { mounted = false }
   }, [id])
+
+  useEffect(() => {
+    try {
+      const initial = getLastQty(id)
+      setQty(initial)
+    } catch {}
+  }, [id])
+
+  useEffect(() => {
+    if (!product) return
+    const categoryName = typeof product.category === 'object' && product.category?.name ? product.category.name : product.category
+    fetchProductsByCategory(categoryName)
+      .then((data) => {
+        const rel = (data || []).filter(p => String(p.id) !== String(id)).slice(0, 12)
+        setRelated(rel.length ? rel : sampleProducts.filter(p => p.category === categoryName && String(p.id) !== String(id)))
+      })
+      .catch(() => {
+        setRelated(sampleProducts.filter(p => p.category === categoryName && String(p.id) !== String(id)))
+      })
+  }, [product, id])
 
   const startEdit = () => {
     if (!product) return
@@ -143,16 +171,43 @@ export default function ProductDetail() {
                   <div className="flex-grow">
                     <p className="text-sm text-neutral-500 uppercase tracking-wider">{typeof product.category === 'object' && product.category?.name ? product.category.name : product.category || '—'}</p>
                     <h1 className="text-3xl font-bold mt-1">{product.name}</h1>
+                    <RatingStars rating={product.rating} count={product.reviewsCount} className="mt-1" />
                     <p className="text-neutral-500 mt-1">Estado: {({ ACTIVE: 'Activo', INACTIVE: 'Inactivo', SOLD: 'Vendido' }[product.status]) || product.status || '—'}</p>
-                    <p className="mt-4 text-3xl font-semibold text-primary">${Number(product.price)?.toFixed ? Number(product.price).toFixed(2) : product.price}</p>
+                    <div className="mt-4">
+                      <p className="text-3xl font-semibold text-primary">${Number(product.price)?.toFixed ? Number(product.price).toFixed(2) : product.price}</p>
+                      {Number(product.price) >= 50 && (
+                        <p className="text-sm text-neon font-semibold mt-1">Envío gratis en este producto</p>
+                      )}
+                    </div>
+                    <p className="text-sm text-neutral-700 mt-3">{product.description || 'Sin descripción.'}</p>
                   </div>
 
-                  <div className="mt-6 flex flex-wrap gap-3 border-t border-neutral-200 pt-6">
-                    <Button variant="primary" to={'/chat'}>Abrir chat</Button>
-                    <Button variant="success" onClick={() => { try { addToCart(product, 1); setToast({ message: 'Añadido al carrito', type: 'success' }); } catch(e) { setToast({ message: 'No se pudo añadir al carrito', type: 'error' }); } }}>Agregar al carrito</Button>
-                    <Button variant="secondary">Agregar a favoritos</Button>
-                    <Button variant="ghost" onClick={startEdit}>Editar</Button>
-                    <Button variant="danger" onClick={() => setShowConfirmDelete(true)}>Eliminar</Button>
+                  <div className="mt-6 border-t border-neutral-200 pt-6">
+                    <div className="p-4 rounded-lg bg-neutral-50 border border-neutral-200">
+                      <p className="text-success font-semibold">En stock</p>
+                      <div className="mt-3 flex items-center gap-3">
+                        <Input
+                          type="number"
+                          min={1}
+                          max={99}
+                          value={qty}
+                          onChange={(e) => { setQty(e.target.value); setLastQty(id, e.target.value) }}
+                          className="w-24"
+                        />
+                        <Button onClick={() => { const q = Math.max(1, Number(qty) || 1); setLastQty(id, q); try { addToCart(product, q); setToast({ message: `Añadido al carrito: ${product.name} ×${q}`, type: 'success' }); } catch(e) { setToast({ message: 'No se pudo añadir al carrito', type: 'error' }); } }}>Añadir al carrito</Button>
+                        <Button variant="secondary">Comprar ahora</Button>
+                        <Button variant="ghost" onClick={() => { toggleWishlist(product); const next = !wish; setWish(next); setToast({ message: next ? 'Añadido a favoritos' : 'Quitado de favoritos', type: 'success' }) }}>
+                          {wish ? '❤️ Favorito' : '🤍 Guardar'}
+                        </Button>
+                      </div>
+                      <p className="mt-3 text-xs text-neutral-600">Entregado por AppMarket. Devoluciones gratis dentro de 30 días.</p>
+                    </div>
+
+                    <div className="mt-6 flex flex-wrap gap-3">
+                      <Button variant="primary" to={'/chat'}>Abrir chat</Button>
+                      <Button variant="ghost" onClick={startEdit}>Editar</Button>
+                      <Button variant="danger" onClick={() => setShowConfirmDelete(true)}>Eliminar</Button>
+                    </div>
                   </div>
                 </>
               ) : (
@@ -200,6 +255,11 @@ export default function ProductDetail() {
           <div className="fixed bottom-6 right-6">
             <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: 'info' })} />
           </div>
+        )}
+
+        {/* Carrusel de relacionados */}
+        {!loading && related?.length > 0 && (
+          <RelatedCarousel products={related} />
         )}
 
         <ConfirmModal

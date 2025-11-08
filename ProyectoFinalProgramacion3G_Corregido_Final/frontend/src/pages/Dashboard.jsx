@@ -103,17 +103,36 @@ export default function Dashboard() {
         {error && <p className="text-danger bg-danger/10 p-3 rounded-md mb-6">{error}</p>}
         
         <section>
-          {/* Sección de bienvenida y búsqueda */}
-          <div className="bg-white border border-neutral-200 rounded-lg p-6 mb-6">
-            <h1 className="text-3xl font-bold mb-3">Bienvenido</h1>
+          {/* Hero premium + búsqueda */}
+          <div className="rounded-xl p-8 mb-6 bg-gradient-primary text-white shadow-lg">
+            <h1 className="text-3xl font-bold mb-2">Encuentra lo que amas</h1>
+            <p className="text-white/90 mb-4">Ofertas, favoritos y envíos rápidos — sin salir de AppMarket.</p>
             <form onSubmit={onSearch} className="flex items-center gap-3">
               <Input
                 name="q"
-                placeholder="Buscar productos en todo el mercado"
-                className="flex-grow"
+                placeholder="Buscar productos premium"
+                className="flex-grow bg-white text-neutral-900"
               />
-              <Button type="submit" variant="primary">Buscar</Button>
+              <Button type="submit" variant="secondary">Buscar</Button>
+              <Button variant="ghost" to="/catalog">Ver catálogo</Button>
             </form>
+          </div>
+
+          {/* Atajos de categorías */}
+          <div className="mb-6 flex flex-wrap gap-3">
+            {[
+              { key: 'tecnologia', label: 'Tecnología' },
+              { key: 'hogar', label: 'Hogar' },
+              { key: 'moda', label: 'Moda' },
+            ].map(c => (
+              <button
+                key={c.key}
+                className="px-4 py-2 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-100 text-sm"
+                onClick={() => navigate(`/catalog?category=${c.key}`)}
+              >
+                {c.label}
+              </button>
+            ))}
           </div>
           
           <p className="text-neutral-600 mb-6">Resumen rápido de tu actividad reciente.</p>
