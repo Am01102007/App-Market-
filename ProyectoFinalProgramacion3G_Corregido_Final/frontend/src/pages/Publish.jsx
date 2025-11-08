@@ -7,6 +7,7 @@ import { createProduct, fetchCategories, createCategory, updateCategory, deleteC
 import { getUsername } from '../lib/auth'
 import Header from '../components/Header'
 import ConfirmModal from '../components/ui/ConfirmModal'
+import api from '../lib/api'
 
 export default function Publish() {
   const navigate = useNavigate()
@@ -133,27 +134,32 @@ export default function Publish() {
     setSaving(true)
     try {
       const username = getUsername()
-      
-      let finalImageUrl = imageUrl
-      
-      // Si se seleccionó un archivo, por ahora usamos la URL temporal
-      // En una implementación completa, aquí subirías el archivo al servidor
-      if (imageType === 'file' && imageFile) {
-        // TODO: Implementar subida de archivo al servidor
-        finalImageUrl = imageUrl // Por ahora usa la URL temporal
-      }
-
+      // Paso 1: crear el producto. Si el usuario eligió archivo, no enviamos la URL temporal.
       const product = {
         name,
         price: Number(price),
         category: { name: category }, // Enviar como objeto con nombre
-        imageUrl: finalImageUrl,
+        imageUrl: imageType === 'url' ? imageUrl : '',
         description,
         availableQuantity: Number(quantity),
         status: 'ACTIVE',
       }
       
       const created = await createProduct(product, username)
+
+      // Paso 2: si hay archivo, subirlo al endpoint del backend (Cloudinary)
+      if (created?.id && imageType === 'file' && imageFile) {
+        const formData = new FormData()
+        formData.append('image', imageFile)
+        try {
+          await api.post(`/products/${created.id}/upload-image`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          })
+        } catch (err) {
+          console.error('Error subiendo imagen a Cloudinary', err)
+          setToast({ message: 'Producto creado, pero falló la subida de imagen', type: 'error' })
+        }
+      }
       setToast({ message: 'Producto creado correctamente', type: 'success' })
       if (created?.id) {
         setTimeout(() => navigate(`/product/${created.id}`), 800)
